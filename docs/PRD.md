@@ -57,7 +57,8 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 
 - Login com Google ou e-mail.
 - Quem cria a conta cria a família e cadastra o(s) bebê(s): nome, data de nascimento, sexo (para a curva da OMS) e peso e altura ao nascer.
-- Código de convite (ex.: BEBE-7K2X) ou link para o outro responsável entrar na família.
+- Código de convite (ex.: BEBE-7K2X9P, 6 caracteres para não dar para adivinhar) ou link (`/convite/BEBE-7K2X9P`) para o outro responsável entrar na família.
+- Na V1 cada pessoa participa de uma família só; quem sai da família pode entrar em outra com um código.
 - Mais de um bebê por família, com seletor no topo da tela.
 - Cada registro guarda quem o fez ("registrado pela mãe").
 

@@ -1,0 +1,16 @@
+{
+  "short_name": "Bebê em Dia",
+  "name": "Bebê em Dia",
+  "description": "Rotina do bebê para pai e mãe: mamadas, sono, fraldas, medidas e roupa pelo clima.",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "192x192", "purpose": "any" }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#FFF8F0",
+  "background_color": "#FFF8F0"
+}
