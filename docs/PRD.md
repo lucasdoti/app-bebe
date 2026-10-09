@@ -150,14 +150,16 @@ A sugestão parte de uma regra fixa por temperatura e é calibrada por bebê com
 - Sling ou colo: uma camada a menos (o corpo do adulto aquece).
 - Vento forte ou chuva: casaco corta-vento ou capa no carrinho.
 - Queda de 5 °C ou mais na previsão do passeio: aviso "leve um casaco extra".
-- Dormindo: sugestão de saco de dormir pelo TOG, a partir da temperatura do quarto informada pelos pais.
+- Dormindo: sugestão de saco de dormir pelo TOG, a partir da temperatura do quarto informada pelos pais. Por segurança, o sono não ganha a camada extra do recém-nascido e sempre lembra do berço livre (sem gorro, manta solta ou travesseiro).
+- Carro: com casaco grosso, aviso para tirar o casaco na cadeirinha e cobrir com a manta por cima do cinto.
+- Sem localização permitida, os pais escolhem a cidade pelo nome (geocodificação da Open-Meteo).
 
 **4. Aprendizado com feedback**
 
-- Depois do passeio, ou na manhã seguinte para o sono, o app pergunta como o bebê ficou: frio, ok ou calor.
+- Depois do passeio, ou na manhã seguinte para o sono, o app pergunta como o bebê ficou: frio, ok ou calor. A pergunta aparece quando os pais tocam em "Vou vestir assim": 1 h depois no passeio, às 7h do dia seguinte no sono da noite e 2 h depois num cochilo.
 - Cada bebê tem um ajuste pessoal em camadas, entre −1,5 e +1,5. Frio soma 0,25 e calor subtrai 0,25.
 - Com o ajuste em ±0,5 ou mais, a sugestão muda de faixa e o app explica: "o Theo costuma sentir calor, sugeri uma camada a menos".
-- O ajuste fica separado por contexto (passeio e sono), porque um bebê pode ser calorento só dormindo.
+- O ajuste fica separado por contexto (passeio e sono), porque um bebê pode ser calorento só dormindo. "Em casa" usa o mesmo ajuste do passeio (o bebê acordado).
 
 **5. API de clima.** Open-Meteo: gratuita, sem chave, com previsão horária. Alternativa: OpenWeatherMap.
 

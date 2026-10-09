@@ -7,10 +7,14 @@ import { Folha } from '@/components/folha';
 import { BotaoRegistro, CartaoResumo, SeletorBebe, type NomeIcone } from '@/components/home';
 import { Botao, BotaoIcone, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
+import { useClima } from '@/context/clima';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
+import { useRoupa, type Pendente, type Resultado } from '@/context/roupa';
 import { useSessao } from '@/context/sessao';
 import { useAgora } from '@/hooks/use-agora';
+import { useSugestao } from '@/hooks/use-sugestao';
+import { descricaoTempo } from '@/lib/clima';
 import { formatar } from '@/components/grafico-crescimento';
 import { percentil, percentilTexto, pontosDe } from '@/lib/crescimento';
 import { deISO, fase, idadeTexto, type Fase } from '@/lib/idade';
@@ -55,6 +59,10 @@ export default function Inicio() {
   const { bebes, bebeAtual, escolherBebe, carregando } = useBebes();
   const reg = useRegistros();
   const med = useMedidas();
+  const { clima: tempoAgora } = useClima();
+  const roupa = useRoupa();
+  const sugestaoCasa = useSugestao('casa', 'carrinho', null);
+  const [erroFeedback, setErroFeedback] = useState<string | null>(null);
   const { cores } = useTema();
   const r = resumo(reg.doBebe);
   const agora = useAgora(r.peitoAtivo || r.dormindo ? 1000 : 30_000);
@@ -214,9 +222,18 @@ export default function Inicio() {
       key="clima"
       cor={cores.clima}
       icone="tshirt-crew-outline"
-      titulo="Clima e roupa"
-      valor="Em breve"
-      detalhe="Sugestão de roupa pelo clima"
+      titulo={
+        tempoAgora
+          ? `Agora: ${descricaoTempo(tempoAgora.atual.codigo, tempoAgora.atual.dia).texto.toLowerCase()}`
+          : 'Clima e roupa'
+      }
+      valor={
+        tempoAgora
+          ? `${Math.round(tempoAgora.atual.temp)}° · sensação ${Math.round(tempoAgora.atual.sensacao)}°`
+          : 'Ver o clima'
+      }
+      detalhe={sugestaoCasa ? `Em casa: ${sugestaoCasa.titulo.toLowerCase()}` : 'Toque para a sugestão de roupa'}
+      onPress={() => router.push('/roupa')}
     />
   );
 
@@ -334,6 +351,19 @@ export default function Inicio() {
         </Texto>
       </View>
 
+      {roupa.perguntas(bebeAtual.id).slice(0, 1).map((p) => (
+        <PerguntaRoupa
+          key={p.id}
+          nome={bebeAtual.nome}
+          pendente={p}
+          erro={erroFeedback}
+          onResponder={async (resultado) => {
+            setErroFeedback(await roupa.responder(p, resultado));
+          }}
+          onDispensar={() => roupa.dispensar(p.id)}
+        />
+      ))}
+
       {alimentacao}
       {sono}
       {fraldas}
@@ -441,6 +471,49 @@ export default function Inicio() {
           ))}
       </Folha>
     </Tela>
+  );
+}
+
+// "Como o bebê ficou?" depois do passeio ou na manhã seguinte ao sono; calibra a sugestão de roupa.
+function PerguntaRoupa({
+  nome,
+  pendente,
+  erro,
+  onResponder,
+  onDispensar,
+}: {
+  nome: string;
+  pendente: Pendente;
+  erro: string | null;
+  onResponder: (r: Resultado) => void;
+  onDispensar: () => void;
+}) {
+  const { cores } = useTema();
+  const onde = { casa: 'em casa', passeio: 'no passeio', sono: 'dormindo' }[pendente.contexto];
+  return (
+    <Cartao style={{ backgroundColor: cores.clima, borderColor: cores.clima }}>
+      <Texto variante="subtitulo" style={{ color: cores.textoNaPrimaria }}>
+        Como {nome} ficou {onde}?
+      </Texto>
+      <Texto style={{ color: cores.textoNaPrimaria }}>
+        Roupa das {horaCurta(new Date(pendente.marcadoEm))}: {pendente.sugestao.toLowerCase()}
+      </Texto>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        {(
+          [
+            ['frio', 'Com frio'],
+            ['ok', 'Bem'],
+            ['calor', 'Com calor'],
+          ] as [Resultado, string][]
+        ).map(([r, titulo]) => (
+          <View key={r} style={{ flex: 1 }}>
+            <Botao titulo={titulo} variante="secundario" onPress={() => onResponder(r)} />
+          </View>
+        ))}
+      </View>
+      {erro && <Texto style={{ color: cores.textoNaPrimaria }}>{erro}</Texto>}
+      <Botao titulo="Agora não" variante="texto" onPress={onDispensar} />
+    </Cartao>
   );
 }
 
