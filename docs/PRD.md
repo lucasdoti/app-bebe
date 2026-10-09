@@ -260,6 +260,7 @@ Visual fofinho em tons pastéis, com um modo noturno escuro e de baixo brilho qu
 - **Formas:** cantos bem arredondados, cartões macios, ícones com traço grosso e ilustrações simples (nuvem, lua, mamadeira).
 - **Tipografia:** arredondada e legível, como Nunito ou Quicksand, com números grandes para "há 1h20".
 - **Roupa sugerida:** ilustração de um bonequinho vestido com as camadas, no lugar de uma lista de texto.
+- **Logo:** bebê dormindo no colo de uma lua lilás, com estrelinhas amarelas, sobre fundo creme (escolhido em 2026-10-14). Fonte em `assets/logo/`; os ícones são gerados por `scripts/gerar-icones.mjs`.
 - **Modo noite automático** entre 20h e 6h, com opção manual.
 
 ## Riscos, questões em aberto e próximos passos

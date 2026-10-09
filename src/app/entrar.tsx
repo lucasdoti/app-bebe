@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Image, Platform, View } from 'react-native';
 
 import { Aviso, Botao, Campo, Cartao, Tela, Texto } from '@/components/ui';
 import { NOME_APP } from '@/lib/app';
@@ -68,7 +68,11 @@ export default function Entrar() {
   return (
     <Tela centralizar>
       <View style={{ alignItems: 'center', gap: 6, marginBottom: 8 }}>
-        <Texto style={{ fontSize: 56, lineHeight: 64 }}>🍼</Texto>
+        <Image
+          source={require('@/assets/images/logo.png')}
+          style={{ width: 112, height: 112 }}
+          accessibilityLabel={`Logo do ${NOME_APP}: bebê dormindo no colo da lua`}
+        />
         <Texto variante="titulo">{NOME_APP}</Texto>
         <Texto variante="suave" style={{ textAlign: 'center' }}>
           A rotina do bebê, junto com quem cuida dele.

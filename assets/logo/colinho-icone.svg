@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Colinho: ícone com fundo creme e cantos arredondados -->
+  <rect width="1024" height="1024" rx="224" fill="#FFF8F0"/>
+  <!-- estrelas -->
+  <path d="M250 250 l18 40 40 18 -40 18 -18 40 -18 -40 -40 -18 40 -18z" fill="#F9DE8B"/>
+  <path d="M790 220 l12 26 26 12 -26 12 -12 26 -12 -26 -26 -12 26 -12z" fill="#F9DE8B"/>
+  <circle cx="820" cy="400" r="14" fill="#F9DE8B"/>
+  <!-- cabeça -->
+  <circle cx="512" cy="540" r="150" fill="#FFE6D6"/>
+  <path d="M440 550 q20 20 40 0" fill="none" stroke="#3D3550" stroke-width="15" stroke-linecap="round"/>
+  <path d="M544 550 q20 20 40 0" fill="none" stroke="#3D3550" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="426" cy="600" r="22" fill="#F4A7BB"/>
+  <circle cx="598" cy="600" r="22" fill="#F4A7BB"/>
+  <!-- lua em forma de colo -->
+  <path d="M172 520 A340 340 0 0 0 852 520 A350 290 0 0 1 172 520 Z" fill="#C9B6F2"/>
+</svg>
