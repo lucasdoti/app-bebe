@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx expo export --platform web --output-dir dist",
+  "buildCommand": "EXPO_PUBLIC_VERSAO=$(echo $VERCEL_GIT_COMMIT_SHA | cut -c1-7) npx expo export --platform web --output-dir dist",
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,

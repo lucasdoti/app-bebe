@@ -125,6 +125,9 @@ export default function Ajustes() {
 
       <Botao titulo="Sair da família" variante="texto" onPress={sairDaFamilia} />
       <Botao titulo="Sair da conta" variante="texto" onPress={sair} />
+      <Texto variante="suave" style={{ textAlign: 'center' }}>
+        {NOME_APP} · versão {process.env.EXPO_PUBLIC_VERSAO || 'local'}
+      </Texto>
     </Tela>
   );
 }
