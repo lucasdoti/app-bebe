@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import type { Bebe } from '@/context/bebes';
-import { useGestacao } from '@/context/gestacao';
+import { pontos, useGestacao } from '@/context/gestacao';
 import { useRegistros } from '@/context/registros';
 import { useAgora } from '@/hooks/use-agora';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@/lib/gestacao';
 import { deISO, hojeISO } from '@/lib/idade';
 import { duracaoSegundos } from '@/lib/registros';
-import { haQuanto, horaCurta } from '@/lib/tempo';
+import { duracao, haQuanto, horaCurta } from '@/lib/tempo';
 import { fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 import { BotaoRegistro, CartaoResumo } from './home';
@@ -36,7 +36,7 @@ const novoPreNatal = (tipo: string) => router.push({ pathname: '/pre-natal/[id]'
 // Tela inicial enquanto o bebê está a caminho.
 export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) {
   const { cores } = useTema();
-  const { preNatal, mala } = useGestacao();
+  const { preNatal, mala, nomes } = useGestacao();
   const { doBebe } = useRegistros();
   const agora = useAgora(30_000);
 
@@ -52,11 +52,18 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const contracaoAtiva = contracoes.find((r) => r.fim === null);
   const mostrarContracoes = ig.semanas >= 28 || contracoes.length > 0;
   const prontos = mala.filter((m) => m.feito).length;
+  const movimentos = doBebe.filter((r) => r.tipo === 'movimentos');
+  const mostrarMovimentos = ig.semanas >= 28 || movimentos.length > 0;
+  const ultimaContagem = movimentos[0];
+  const favorito = nomes.find((n) => pontos(n) > 0);
 
   const rodape = (
     <View style={{ flexDirection: 'row', gap: 10 }}>
       <BotaoRegistro cor={cores.clima} icone="stethoscope" titulo="Consulta" onPress={() => novoPreNatal('consulta')} />
       <BotaoRegistro cor={cores.sono} icone="heart-pulse" titulo="Ultrassom" onPress={() => novoPreNatal('ultrassom')} />
+      {mostrarMovimentos && (
+        <BotaoRegistro cor={cores.sono} icone="gesture-tap" titulo="Mexeu" onPress={() => router.push('/movimentos')} />
+      )}
       <BotaoRegistro
         cor={cores.mamada}
         icone="timer-outline"
@@ -140,6 +147,34 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
           onPress={() => router.push('/contracoes')}
         />
       )}
+
+      {mostrarMovimentos && (
+        <CartaoResumo
+          cor={cores.sono}
+          icone="gesture-tap"
+          titulo="Movimentos do bebê"
+          valor={
+            ultimaContagem?.tipo === 'movimentos'
+              ? ultimaContagem.fim
+                ? `${ultimaContagem.detalhes.quantidade} em ${duracao(new Date(ultimaContagem.fim).getTime() - new Date(ultimaContagem.inicio).getTime())}`
+                : `Contando: ${ultimaContagem.detalhes.quantidade}`
+              : 'Nenhuma contagem'
+          }
+          detalhe={
+            ultimaContagem ? `Última contagem ${haQuanto(ultimaContagem.inicio, new Date(agora))}` : 'Conte 10 movimentos e veja o tempo'
+          }
+          onPress={() => router.push('/movimentos')}
+        />
+      )}
+
+      <CartaoResumo
+        cor={cores.mamada}
+        icone="format-list-text"
+        titulo="Nomes"
+        valor={favorito ? favorito.nome : nomes.length ? `${nomes.length} na lista` : 'Começar a lista'}
+        detalhe={favorito ? `Favorito por enquanto · ${nomes.length} na lista` : 'Cada um sugere e vota'}
+        onPress={() => router.push('/nomes')}
+      />
 
       <CartaoResumo
         cor={cores.fralda}

@@ -26,7 +26,8 @@ export type Registro =
   | (Base & { tipo: 'refeicao'; detalhes: DetalhesRefeicao })
   | (Base & { tipo: 'sono'; detalhes: Record<string, never> })
   | (Base & { tipo: 'fralda'; detalhes: DetalhesFralda })
-  | (Base & { tipo: 'contracao'; detalhes: Record<string, never> });
+  | (Base & { tipo: 'contracao'; detalhes: Record<string, never> })
+  | (Base & { tipo: 'movimentos'; detalhes: { quantidade: number } });
 
 export type Tipo = Registro['tipo'];
 
@@ -94,6 +95,11 @@ export function descricao(r: Registro, agora = Date.now()): { titulo: string; de
       return {
         titulo: r.fim ? 'Contração' : 'Contração agora',
         detalhe: duracaoSegundos((r.fim ? ms(r.fim) : agora) - ms(r.inicio)),
+      };
+    case 'movimentos':
+      return {
+        titulo: r.fim ? 'Movimentos do bebê' : 'Contando movimentos',
+        detalhe: `${r.detalhes.quantidade} em ${duracao((r.fim ? ms(r.fim) : agora) - ms(r.inicio))}`,
       };
     case 'fralda': {
       const d = r.detalhes;

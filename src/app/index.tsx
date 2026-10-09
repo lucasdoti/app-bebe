@@ -49,6 +49,7 @@ function corDoTipo(t: Tipo, cores: Paleta) {
     sono: cores.sono,
     fralda: cores.fralda,
     contracao: cores.mamada,
+    movimentos: cores.sono,
   };
   return mapa[t];
 }
@@ -57,6 +58,7 @@ function iconeDoTipo(r: Registro): NomeIcone {
   if (r.tipo === 'refeicao') return 'food-apple-outline';
   if (r.tipo === 'sono') return 'sleep';
   if (r.tipo === 'contracao') return 'timer-outline';
+  if (r.tipo === 'movimentos') return 'gesture-tap';
   if (r.tipo === 'fralda') return r.detalhes.penico ? 'toilet' : 'human-baby-changing-table';
   return 'baby-bottle-outline';
 }

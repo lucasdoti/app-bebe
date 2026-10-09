@@ -55,6 +55,9 @@ export default function PreNatalForm() {
       ? String(existente.percentil_laudo).replace('.', ',')
       : '',
   );
+  const [pesoMae, setPesoMae] = useState(existente?.peso_mae_kg ? String(existente.peso_mae_kg).replace('.', ',') : '');
+  const [pressaoMax, setPressaoMax] = useState(existente?.pressao_sistolica ? String(existente.pressao_sistolica) : '');
+  const [pressaoMin, setPressaoMin] = useState(existente?.pressao_diastolica ? String(existente.pressao_diastolica) : '');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -74,6 +77,17 @@ export default function PreNatalForm() {
     const compCm = inteiro(comprimento);
     const batimentos = inteiro(bpm);
     const perc = inteiro(percentil);
+    const kgMae = inteiro(pesoMae);
+    // Aceita "120 / 80" em mmHg ou "12 por 8" como se fala no consultório.
+    const mmHg = (v: number | null) => (v !== null && v < 30 ? v * 10 : v);
+    const sis = mmHg(inteiro(pressaoMax));
+    const dia = mmHg(inteiro(pressaoMin));
+    if (Number.isNaN(kgMae) || (kgMae !== null && (kgMae < 30 || kgMae > 200)))
+      return setErro('Peso da mãe em kg, por exemplo 68,5.');
+    if (Number.isNaN(sis) || Number.isNaN(dia) || (sis === null) !== (dia === null))
+      return setErro('Preencha a pressão máxima e a mínima, por exemplo 12 e 8 (ou 120 e 80).');
+    if (sis !== null && dia !== null && (sis < 60 || sis > 250 || dia < 30 || dia > 160 || dia >= sis))
+      return setErro('Confira a pressão: a máxima vem primeiro, por exemplo 12 por 8.');
     if (Number.isNaN(pesoG) || (pesoG !== null && (pesoG < 1 || pesoG > 6000)))
       return setErro('Peso fetal estimado em gramas, por exemplo 620.');
     if (Number.isNaN(compCm) || (compCm !== null && (compCm <= 0 || compCm > 65)))
@@ -93,6 +107,9 @@ export default function PreNatalForm() {
       comprimento_cm: tipo === 'ultrassom' ? compCm : null,
       batimentos_bpm: tipo === 'ultrassom' && batimentos !== null ? Math.round(batimentos) : null,
       percentil_laudo: tipo === 'ultrassom' ? perc : null,
+      peso_mae_kg: tipo === 'consulta' ? kgMae : null,
+      pressao_sistolica: tipo === 'consulta' && sis !== null ? Math.round(sis) : null,
+      pressao_diastolica: tipo === 'consulta' && dia !== null ? Math.round(dia) : null,
     };
 
     setCarregando(true);
@@ -201,6 +218,38 @@ export default function PreNatalForm() {
             placeholder="Ex.: 48"
             keyboardType="decimal-pad"
             inputMode="decimal"
+          />
+        </>
+      )}
+
+      {tipo === 'consulta' && (
+        <>
+          <Texto variante="rotulo">Da mãe, nesta consulta (opcional)</Texto>
+          <Campo
+            rotulo="Peso (kg)"
+            value={pesoMae}
+            onChangeText={setPesoMae}
+            placeholder="Ex.: 68,5"
+            keyboardType="decimal-pad"
+            inputMode="decimal"
+          />
+          <Campo
+            rotulo="Pressão máxima"
+            value={pressaoMax}
+            onChangeText={setPressaoMax}
+            placeholder="Ex.: 12 ou 120"
+            keyboardType="number-pad"
+            inputMode="numeric"
+            maxLength={3}
+          />
+          <Campo
+            rotulo="Pressão mínima"
+            value={pressaoMin}
+            onChangeText={setPressaoMin}
+            placeholder="Ex.: 8 ou 80"
+            keyboardType="number-pad"
+            inputMode="numeric"
+            maxLength={3}
           />
         </>
       )}

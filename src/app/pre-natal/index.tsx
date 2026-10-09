@@ -2,13 +2,14 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
+import { GraficoLinha } from '@/components/grafico-linha';
 import { GraficoUltrassom } from '@/components/grafico-ultrassom';
 import { dataHoraCurta } from '@/components/inicio-gestacao';
 import { Botao, Cabecalho, Cartao, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
 import { useGestacao, type PreNatal, type TipoPreNatal } from '@/context/gestacao';
 import { idadeGestacionalNaData, pesoTexto } from '@/lib/gestacao';
-import { hojeISO } from '@/lib/idade';
+import { deISO, hojeISO } from '@/lib/idade';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
@@ -89,6 +90,8 @@ export default function PreNatalLista() {
         ))}
       </Cartao>
 
+      {bebeAtual.parto_previsto && <SaudeDaMae consultas={preNatal} parto={bebeAtual.parto_previsto} />}
+
       {bebeAtual.parto_previsto && comPeso.length > 0 && (
         <Cartao>
           <Texto variante="subtitulo">Peso estimado nos ultrassons</Texto>
@@ -104,5 +107,67 @@ export default function PreNatalLista() {
         ))}
       </Cartao>
     </Tela>
+  );
+}
+
+const kg = (v: number) => `${String(Math.round(v * 10) / 10).replace('.', ',')} kg`;
+// Pressão como se fala no consultório: 120/80 vira "12 por 8".
+const pressao = (s: number, d: number) =>
+  `${String(s / 10).replace('.', ',')} por ${String(d / 10).replace('.', ',')}`;
+
+// Peso e pressão da mãe anotados nas consultas.
+function SaudeDaMae({ consultas, parto }: { consultas: PreNatal[]; parto: string }) {
+  const { cores } = useTema();
+  const comPeso = consultas.filter((c) => c.peso_mae_kg !== null);
+  const comPressao = consultas.filter((c) => c.pressao_sistolica !== null && c.pressao_diastolica !== null);
+  if (!comPeso.length && !comPressao.length) return null;
+
+  const semana = (c: PreNatal) => idadeGestacionalNaData(parto, hojeISO(new Date(c.data))).totalDias / 7;
+  const ultimaPressao = comPressao.at(-1);
+  const alta = comPressao.some((c) => c.pressao_sistolica! >= 140 || c.pressao_diastolica! >= 90);
+  const ganho = comPeso.length > 1 ? comPeso.at(-1)!.peso_mae_kg! - comPeso[0].peso_mae_kg! : null;
+
+  return (
+    <Cartao>
+      <Texto variante="subtitulo">Saúde da mãe</Texto>
+      {comPeso.length > 0 && (
+        <Texto>
+          Peso: {kg(comPeso.at(-1)!.peso_mae_kg!)}
+          {ganho !== null
+            ? ` · ${ganho >= 0 ? '+' : ''}${kg(ganho)} desde ${deISO(hojeISO(new Date(comPeso[0].data)))}`
+            : ''}
+        </Texto>
+      )}
+      {comPeso.length > 1 && (
+        <GraficoLinha
+          pontos={comPeso.map((c) => ({
+            x: semana(c),
+            y: c.peso_mae_kg!,
+            descricao: `${deISO(hojeISO(new Date(c.data)))}: ${kg(c.peso_mae_kg!)}`,
+          }))}
+          rotuloX={(v) => `${Math.round(v)} sem`}
+          rotuloY={(v) => `${Math.round(v)}`}
+          legenda="Peso da mãe (kg) por semana de gestação."
+        />
+      )}
+      {ultimaPressao && (
+        <Texto>
+          Última pressão: {pressao(ultimaPressao.pressao_sistolica!, ultimaPressao.pressao_diastolica!)} em{' '}
+          {deISO(hojeISO(new Date(ultimaPressao.data)))}
+        </Texto>
+      )}
+      {comPressao.length > 1 && (
+        <Texto variante="suave">
+          {comPressao.map((c) => pressao(c.pressao_sistolica!, c.pressao_diastolica!)).join(' · ')}
+        </Texto>
+      )}
+      {alta && (
+        <View style={{ backgroundColor: cores.fralda, borderRadius: 14, padding: 12 }}>
+          <Texto style={{ color: cores.textoNaPrimaria }}>
+            Alguma medida chegou a 14 por 9 ou mais. Na gestação isso merece atenção: confira com a obstetra.
+          </Texto>
+        </View>
+      )}
+    </Cartao>
   );
 }

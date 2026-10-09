@@ -72,6 +72,8 @@ function Rotas() {
           <Stack.Screen name="pre-natal/[id]" />
           <Stack.Screen name="contracoes" />
           <Stack.Screen name="mala" />
+          <Stack.Screen name="movimentos" />
+          <Stack.Screen name="nomes" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />
