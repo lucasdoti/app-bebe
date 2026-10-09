@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Bebe } from '@/context/bebes';
@@ -16,24 +16,36 @@ export function CartaoResumo({
   titulo,
   valor,
   detalhe,
+  onPress,
+  children,
 }: {
   cor: string;
   icone: NomeIcone;
   titulo: string;
   valor: string;
   detalhe?: string;
+  onPress?: () => void;
+  /** Botões de ação do cartão (ex.: Encerrar). */
+  children?: ReactNode;
 }) {
   const { cores } = useTema();
   return (
-    <View style={[estilos.cartao, { backgroundColor: cores.cartao, borderColor: cores.borda }]}>
+    <View style={[estilos.cartaoBase, { backgroundColor: cores.cartao, borderColor: cores.borda }]}>
+      <Pressable
+        disabled={!onPress}
+        onPress={onPress}
+        accessibilityRole={onPress ? 'button' : undefined}
+        style={({ pressed }) => [estilos.cartao, { opacity: pressed ? 0.7 : 1 }]}>
       <View style={[estilos.bolinha, { backgroundColor: cor }]}>
         <MaterialCommunityIcons name={icone} size={26} color={cores.textoNaPrimaria} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Texto variante="rotulo">{titulo}</Texto>
         <Text style={{ fontFamily: fontes.extra, fontSize: 22, lineHeight: 28, color: cores.texto }}>{valor}</Text>
-        {detalhe && <Texto variante="suave">{detalhe}</Texto>}
+        {!!detalhe && <Texto variante="suave">{detalhe}</Texto>}
       </View>
+      </Pressable>
+      {children && <View style={estilos.acoes}>{children}</View>}
     </View>
   );
 }
@@ -107,14 +119,9 @@ export function SeletorBebe({
 }
 
 const estilos = StyleSheet.create({
-  cartao: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    borderRadius: raio.cartao,
-    borderWidth: 1,
-    padding: 18,
-  },
+  cartaoBase: { borderRadius: raio.cartao, borderWidth: 1, padding: 18, gap: 14 },
+  cartao: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  acoes: { flexDirection: 'row', gap: 10 },
   bolinha: {
     width: 52,
     height: 52,

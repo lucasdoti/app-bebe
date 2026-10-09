@@ -185,11 +185,14 @@ export function Escolha<T extends string>({
   opcoes,
   valor,
   onChange,
+  aoLimpar,
 }: {
   rotulo: string;
   opcoes: { valor: T; titulo: string }[];
   valor: T | null;
   onChange: (valor: T) => void;
+  /** Para escolhas opcionais: tocar de novo na opção marcada desmarca. */
+  aoLimpar?: () => void;
 }) {
   const { cores } = useTema();
   return (
@@ -203,7 +206,7 @@ export function Escolha<T extends string>({
               key={o.valor}
               accessibilityRole="radio"
               accessibilityState={{ selected: ativo }}
-              onPress={() => onChange(o.valor)}
+              onPress={() => (ativo && aoLimpar ? aoLimpar() : onChange(o.valor))}
               style={[
                 estilos.opcao,
                 {

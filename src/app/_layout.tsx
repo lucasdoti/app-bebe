@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { BebesProvider } from '@/context/bebes';
+import { RegistrosProvider } from '@/context/registros';
 import { SessaoProvider, useSessao } from '@/context/sessao';
 import { TemaProvider, useTema } from '@/theme/tema';
 
@@ -21,7 +22,9 @@ export default function RootLayout() {
     <TemaProvider>
       <SessaoProvider>
         <BebesProvider>
-          <Rotas />
+          <RegistrosProvider>
+            <Rotas />
+          </RegistrosProvider>
         </BebesProvider>
       </SessaoProvider>
     </TemaProvider>
@@ -49,6 +52,7 @@ function Rotas() {
           <Stack.Screen name="index" />
           <Stack.Screen name="ajustes" />
           <Stack.Screen name="bebe/[id]" />
+          <Stack.Screen name="registro/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />
