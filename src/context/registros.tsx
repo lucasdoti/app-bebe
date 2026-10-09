@@ -2,6 +2,7 @@ import { randomUUID } from 'expo-crypto';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { fecharNotificacoes } from '@/lib/notificacoes';
 import type { DetalhesFralda, Lado, Leite, Registro } from '@/lib/registros';
 import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
@@ -206,6 +207,9 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
       if (!bebeId || !userId) return null;
       const registro = { ...novo, id: randomUUID(), bebe_id: bebeId, autor_id: userId } as Registro;
       executar({ op: 'inserir', registro });
+      if (registro.tipo === 'dose') fecharNotificacoes(`remedio-${registro.detalhes.remedio_id}`);
+      if (registro.tipo === 'mamada' || registro.tipo === 'mamadeira' || registro.tipo === 'refeicao')
+        fecharNotificacoes(`mamada-${bebeId}`);
       return registro;
     },
     [bebeAtual, userId, executar],

@@ -11,6 +11,7 @@ import { nasceu, useBebes } from '@/context/bebes';
 import { useClima } from '@/context/clima';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
+import { useRemedios } from '@/context/remedios';
 import { useRoupa, type Pendente, type Resultado } from '@/context/roupa';
 import { useSessao } from '@/context/sessao';
 import { useAgora } from '@/hooks/use-agora';
@@ -50,6 +51,8 @@ function corDoTipo(t: Tipo, cores: Paleta) {
     fralda: cores.fralda,
     contracao: cores.mamada,
     movimentos: cores.sono,
+    dose: cores.medidas,
+    febre: cores.fralda,
   };
   return mapa[t];
 }
@@ -59,6 +62,8 @@ function iconeDoTipo(r: Registro): NomeIcone {
   if (r.tipo === 'sono') return 'sleep';
   if (r.tipo === 'contracao') return 'timer-outline';
   if (r.tipo === 'movimentos') return 'gesture-tap';
+  if (r.tipo === 'dose') return 'pill';
+  if (r.tipo === 'febre') return 'thermometer';
   if (r.tipo === 'fralda') return r.detalhes.penico ? 'toilet' : 'human-baby-changing-table';
   return 'baby-bottle-outline';
 }
@@ -74,6 +79,7 @@ export default function Inicio() {
   const { clima: tempoAgora } = useClima();
   const roupa = useRoupa();
   const sugestaoCasa = useSugestao('casa', 'carrinho', null);
+  const { situacao } = useRemedios();
   const [erroFeedback, setErroFeedback] = useState<string | null>(null);
   const { cores } = useTema();
   const r = resumo(reg.doBebe);
@@ -253,6 +259,30 @@ export default function Inicio() {
 
   const ultimoPeso = pontosDe(bebeAtual, med.doBebe, 'peso').at(-1);
   const ultimaAltura = pontosDe(bebeAtual, med.doBebe, 'altura').at(-1);
+  // Próxima dose do remédio mais urgente (PRD: cartão "próxima dose liberada às 20h").
+  const tratamentos = situacao(agora)
+    .filter((s) => !s.terminou)
+    .sort((a, b) => a.proxima - b.proxima);
+  const remedio = tratamentos[0] && (
+    <CartaoResumo
+      key="remedio"
+      cor={cores.medidas}
+      icone="pill"
+      titulo={tratamentos.length > 1 ? `Remédios (${tratamentos.length})` : `Remédio: ${tratamentos[0].remedio.nome}`}
+      valor={
+        tratamentos[0].liberada
+          ? `${tratamentos[0].remedio.nome} liberado agora`
+          : `Próxima dose às ${horaCurta(new Date(tratamentos[0].proxima))}`
+      }
+      detalhe={
+        tratamentos[0].ultimaDose
+          ? `Última: ${horaCurta(tratamentos[0].ultimaDose.inicio)} por ${nomeAutor(tratamentos[0].ultimaDose.autor_id)}`
+          : 'Nenhuma dose registrada'
+      }
+      onPress={() => router.push('/remedios')}
+    />
+  );
+
   const medidas = (
     <CartaoResumo
       key="medidas"
@@ -382,6 +412,7 @@ export default function Inicio() {
       {sono}
       {fraldas}
       {clima}
+      {remedio}
       {medidas}
 
       <Cartao>

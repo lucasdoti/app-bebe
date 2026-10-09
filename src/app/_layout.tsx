@@ -15,11 +15,15 @@ import { ClimaProvider } from '@/context/clima';
 import { GestacaoProvider } from '@/context/gestacao';
 import { MedidasProvider } from '@/context/medidas';
 import { RegistrosProvider } from '@/context/registros';
+import { RemediosProvider } from '@/context/remedios';
+import { registrarServiceWorker } from '@/lib/notificacoes';
 import { RoupaProvider } from '@/context/roupa';
 import { SessaoProvider, useSessao } from '@/context/sessao';
 import { TemaProvider, useTema } from '@/theme/tema';
 
 SplashScreen.preventAutoHideAsync();
+// Web Push: o service worker precisa estar registrado para receber os lembretes.
+registrarServiceWorker();
 
 export default function RootLayout() {
   return (
@@ -31,7 +35,9 @@ export default function RootLayout() {
               <ClimaProvider>
                 <RoupaProvider>
                   <GestacaoProvider>
-                    <Rotas />
+                    <RemediosProvider>
+                      <Rotas />
+                    </RemediosProvider>
                   </GestacaoProvider>
                 </RoupaProvider>
               </ClimaProvider>
@@ -74,6 +80,9 @@ function Rotas() {
           <Stack.Screen name="mala" />
           <Stack.Screen name="movimentos" />
           <Stack.Screen name="nomes" />
+          <Stack.Screen name="remedios" />
+          <Stack.Screen name="remedio/[id]" />
+          <Stack.Screen name="lembretes" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />

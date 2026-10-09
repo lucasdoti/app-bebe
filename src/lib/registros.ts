@@ -27,7 +27,11 @@ export type Registro =
   | (Base & { tipo: 'sono'; detalhes: Record<string, never> })
   | (Base & { tipo: 'fralda'; detalhes: DetalhesFralda })
   | (Base & { tipo: 'contracao'; detalhes: Record<string, never> })
-  | (Base & { tipo: 'movimentos'; detalhes: { quantidade: number } });
+  | (Base & { tipo: 'movimentos'; detalhes: { quantidade: number } })
+  | (Base & { tipo: 'dose'; detalhes: { remedio_id: string; nome: string; dose: string } })
+  | (Base & { tipo: 'febre'; detalhes: { temperatura: number } });
+
+export const temperaturaTexto = (t: number) => `${t.toFixed(1).replace('.', ',')} °C`;
 
 export type Tipo = Registro['tipo'];
 
@@ -96,6 +100,10 @@ export function descricao(r: Registro, agora = Date.now()): { titulo: string; de
         titulo: r.fim ? 'Contração' : 'Contração agora',
         detalhe: duracaoSegundos((r.fim ? ms(r.fim) : agora) - ms(r.inicio)),
       };
+    case 'dose':
+      return { titulo: `Remédio: ${r.detalhes.nome}`, detalhe: r.detalhes.dose };
+    case 'febre':
+      return { titulo: 'Temperatura', detalhe: temperaturaTexto(r.detalhes.temperatura) };
     case 'movimentos':
       return {
         titulo: r.fim ? 'Movimentos do bebê' : 'Contando movimentos',

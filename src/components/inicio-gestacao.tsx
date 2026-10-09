@@ -185,6 +185,8 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
         onPress={() => router.push('/mala')}
       />
 
+      <Botao titulo="Lembretes das consultas" variante="secundario" onPress={() => router.push('/lembretes')} />
+
       <Botao
         titulo={`${bebe.nome} nasceu!`}
         variante={ig.semanas >= 37 ? 'primario' : 'secundario'}

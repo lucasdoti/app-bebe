@@ -123,6 +123,9 @@ export default function Ajustes() {
       />
       <Texto variante="suave">No automático, o modo noite liga das 20h às 6h.</Texto>
 
+      <Botao titulo="Lembretes e notificações" variante="secundario" onPress={() => router.push('/lembretes')} />
+      <Botao titulo="Remédios e febre" variante="secundario" onPress={() => router.push('/remedios')} />
+
       <Botao titulo="Sair da família" variante="texto" onPress={sairDaFamilia} />
       <Botao titulo="Sair da conta" variante="texto" onPress={sair} />
       <Texto variante="suave" style={{ textAlign: 'center' }}>

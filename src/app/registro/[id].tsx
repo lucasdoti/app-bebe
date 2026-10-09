@@ -24,6 +24,8 @@ const titulos: Record<Tipo, string> = {
   fralda: 'Fralda',
   contracao: 'Contração',
   movimentos: 'Movimentos do bebê',
+  dose: 'Dose de remédio',
+  febre: 'Temperatura',
 };
 
 // Hoje e ontem; ao editar um registro mais antigo, o dia dele também aparece.
@@ -183,7 +185,7 @@ export default function RegistroForm() {
         if (f.getTime() > Date.now() + MINUTO) return setErro('O horário em que acordou está no futuro.');
         fim = f.toISOString();
       }
-    } else if (tipo === 'contracao' || tipo === 'movimentos') {
+    } else if (tipo === 'contracao' || tipo === 'movimentos' || tipo === 'dose' || tipo === 'febre') {
       // Só o horário muda; a duração medida no cronômetro (e a contagem) é mantida.
       const duracaoMs = existente?.fim ? new Date(existente.fim).getTime() - new Date(existente.inicio).getTime() : MINUTO;
       fim = new Date(inicio.getTime() + duracaoMs).toISOString();

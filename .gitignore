@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Segredos locais (nunca commitar)
+supabase/*.local.*

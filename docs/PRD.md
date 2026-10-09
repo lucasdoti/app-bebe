@@ -116,6 +116,10 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Lembretes personalizados: consulta, banho de sol, troca de fralda noturna.
 - A notificação vai para pai e mãe; quando um registra, o lembrete some para os dois.
 - Entrega por Web Push. No iPhone, só com o app instalado na tela inicial e iOS 16.4+.
+- Na gestação, aviso automático até 24 h antes de cada consulta ou exame do pré-natal.
+- Como funciona (V1): uma Edge Function (`enviar-lembretes`) roda a cada minuto pelo pg_cron. A dose registrada antes da hora cancela o aviso para os dois; um aviso que já apareceu some do celular de quem registrou, mas no outro celular fica até ser tocado (o Web Push não permite apagar sem mostrar outra notificação).
+- Lembrete de mamada: um aviso por mamada, ao passar o intervalo escolhido (2h a 4h); não avisa durante uma mamada em andamento.
+- Remédio: tocar em "Dei a dose" antes da hora liberada pede confirmação, para evitar dose dobrada.
 
 **Requisitos não funcionais**
 
