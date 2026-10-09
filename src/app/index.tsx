@@ -31,7 +31,7 @@ export default function Inicio() {
   const sozinho = membros.length < 2;
 
   async function compartilhar() {
-    const mensagem = `Entre na nossa família no app do bebê: ${link}\nOu use o código ${familia!.codigo_convite}`;
+    const mensagem = `Entre na nossa família no Colinho: ${link}\nOu use o código ${familia!.codigo_convite}`;
     try {
       if (Platform.OS === 'web' && !navigator.share) {
         await navigator.clipboard.writeText(mensagem);

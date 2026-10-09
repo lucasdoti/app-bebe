@@ -17,7 +17,7 @@ Um app para pai e mãe registrarem a rotina do bebê em segundos e receberem uma
 
 **Público.** Na V1, o próprio autor e pais conhecidos (uso fechado). Se der certo, publicar nas lojas depois. Cobre bebês de 0 a 3 anos e mais de um bebê por família.
 
-**Nomes provisórios** (a decidir): Ninho, Bebê em Dia, Colinho, Tempinho, Cueiro.
+**Nome:** Colinho. Lembra o colo de quem cuida e combina com o ajuste de roupa do sling/colo. Antes de publicar nas lojas, conferir se o nome está livre na App Store, na Play Store e no INPI.
 
 ## Objetivos e métricas de sucesso
 
@@ -256,7 +256,6 @@ O maior risco é o registro ser lento demais para a madrugada; o segundo é a su
 
 **Questões em aberto**
 
-- Nome do app.
 - Faixas de temperatura: validar com o pediatra.
 - Push no iPhone: testar cedo se o PWA instalado entrega os lembretes de remédio com confiança.
 

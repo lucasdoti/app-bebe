@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Bebê em Dia",
+    "name": "Colinho",
     "slug": "app-bebe",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,8 +22,8 @@
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "name": "Bebê em Dia",
-      "shortName": "Bebê em Dia",
+      "name": "Colinho",
+      "shortName": "Colinho",
       "lang": "pt-BR",
       "themeColor": "#FFF8F0",
       "backgroundColor": "#FFF8F0"
