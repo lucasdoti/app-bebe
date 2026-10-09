@@ -88,7 +88,8 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 **RF6. Medidas**
 
 - Peso, altura e perímetro cefálico com data.
-- Gráfico sobre as curvas da OMS por sexo e idade, mostrando o percentil.
+- Gráfico sobre as curvas da OMS por sexo e idade (faixas dos percentis 3–97 e 15–85 e linha do 50), mostrando o percentil.
+- Na V1, salvar uma medida precisa de internet; os registros de rotina funcionam offline.
 
 **RF7. Clima e roupa**
 

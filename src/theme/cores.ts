@@ -13,6 +13,9 @@ export const paletaDia = {
   fralda: '#F9DE8B',
   medidas: '#A8E6CF',
   clima: '#A7D3F5',
+  // Gráficos: linha do bebê (validada contra o cartão) e grade discreta.
+  medidasForte: '#1E8A68',
+  grade: '#EFE7DC',
 };
 
 // Noite: azul-marinho bem escuro e pastéis dessaturados, com pouco brilho.
@@ -30,6 +33,8 @@ export const paletaNoite: typeof paletaDia = {
   fralda: '#8C7E52',
   medidas: '#5D8576',
   clima: '#5C7B95',
+  medidasForte: '#2E9E7A',
+  grade: '#222B44',
 };
 
 export type Paleta = typeof paletaDia;

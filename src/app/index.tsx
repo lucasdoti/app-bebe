@@ -6,11 +6,14 @@ import { Pressable, Text, View } from 'react-native';
 import { Folha } from '@/components/folha';
 import { BotaoRegistro, CartaoResumo, SeletorBebe, type NomeIcone } from '@/components/home';
 import { Botao, BotaoIcone, Cartao, Escolha, Tela, Texto } from '@/components/ui';
-import { useBebes, type Bebe } from '@/context/bebes';
+import { useBebes } from '@/context/bebes';
+import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
 import { useSessao } from '@/context/sessao';
 import { useAgora } from '@/hooks/use-agora';
-import { fase, idadeTexto, type Fase } from '@/lib/idade';
+import { formatar } from '@/components/grafico-crescimento';
+import { percentil, percentilTexto, pontosDe } from '@/lib/crescimento';
+import { deISO, fase, idadeTexto, type Fase } from '@/lib/idade';
 import {
   descricao,
   ladoAtual,
@@ -44,13 +47,6 @@ function iconeDoTipo(r: Registro): NomeIcone {
   return 'baby-bottle-outline';
 }
 
-function medidaAoNascer(b: Bebe) {
-  const partes = [];
-  if (b.peso_nascer_kg) partes.push(`${String(b.peso_nascer_kg).replace('.', ',')} kg`);
-  if (b.altura_nascer_cm) partes.push(`${String(b.altura_nascer_cm).replace('.', ',')} cm`);
-  return partes.length ? partes.join(' · ') : '—';
-}
-
 const abrirRegistro = (id: string) => router.push({ pathname: '/registro/[id]', params: { id } });
 const novoRegistro = (tipo: Tipo) => router.push({ pathname: '/registro/[id]', params: { id: 'novo', tipo } });
 
@@ -58,6 +54,7 @@ export default function Inicio() {
   const { familia, membros } = useSessao();
   const { bebes, bebeAtual, escolherBebe, carregando } = useBebes();
   const reg = useRegistros();
+  const med = useMedidas();
   const { cores } = useTema();
   const r = resumo(reg.doBebe);
   const agora = useAgora(r.peitoAtivo || r.dormindo ? 1000 : 30_000);
@@ -223,14 +220,27 @@ export default function Inicio() {
     />
   );
 
+  const ultimoPeso = pontosDe(bebeAtual, med.doBebe, 'peso').at(-1);
+  const ultimaAltura = pontosDe(bebeAtual, med.doBebe, 'altura').at(-1);
   const medidas = (
     <CartaoResumo
       key="medidas"
       cor={cores.medidas}
       icone="ruler"
       titulo="Última medida"
-      valor={medidaAoNascer(bebeAtual)}
-      detalhe={bebeAtual.peso_nascer_kg || bebeAtual.altura_nascer_cm ? 'Ao nascer' : 'Nenhuma medida ainda'}
+      valor={
+        [ultimoPeso && formatar(ultimoPeso.valor, 'peso'), ultimaAltura && formatar(ultimaAltura.valor, 'altura')]
+          .filter(Boolean)
+          .join(' · ') || '—'
+      }
+      detalhe={
+        ultimoPeso
+          ? `${ultimoPeso.dias === 0 ? 'Ao nascer' : deISO(ultimoPeso.data)} · peso no ${percentilTexto(
+              percentil('peso', bebeAtual.sexo, ultimoPeso.dias, ultimoPeso.valor),
+            )}`
+          : 'Toque para anotar peso e altura'
+      }
+      onPress={() => router.push('/medidas')}
     />
   );
 
