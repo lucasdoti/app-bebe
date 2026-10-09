@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
+import type { ComponentProps, ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -16,16 +18,79 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ALVO_TOQUE, fontes, raio } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
-export function Tela({ children, centralizar }: { children: ReactNode; centralizar?: boolean }) {
+export function Tela({
+  children,
+  centralizar,
+  topo,
+  rodape,
+}: {
+  children: ReactNode;
+  centralizar?: boolean;
+  topo?: ReactNode;
+  rodape?: ReactNode;
+}) {
   const { cores } = useTema();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: cores.fundo }}>
+      {topo && <View style={estilos.faixa}>{topo}</View>}
       <ScrollView
         contentContainerStyle={[estilos.conteudo, centralizar && { flexGrow: 1, justifyContent: 'center' }]}
         keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>
+      {rodape && (
+        <View style={[estilos.faixa, { borderTopWidth: 1, borderTopColor: cores.borda, backgroundColor: cores.fundo }]}>
+          {rodape}
+        </View>
+      )}
     </SafeAreaView>
+  );
+}
+
+// Cabeçalho das telas internas, com botão de voltar grande.
+export function Cabecalho({ titulo }: { titulo: string }) {
+  const { cores } = useTema();
+  function voltar() {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }
+  return (
+    <View style={estilos.linha}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        onPress={voltar}
+        style={[estilos.botaoIcone, { backgroundColor: cores.cartao, borderColor: cores.borda }]}>
+        <Ionicons name="chevron-back" size={26} color={cores.texto} />
+      </Pressable>
+      <Texto variante="subtitulo" style={{ flex: 1 }} numberOfLines={1}>
+        {titulo}
+      </Texto>
+    </View>
+  );
+}
+
+export function BotaoIcone({
+  icone,
+  rotulo,
+  onPress,
+}: {
+  icone: ComponentProps<typeof Ionicons>['name'];
+  rotulo: string;
+  onPress: () => void;
+}) {
+  const { cores } = useTema();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={rotulo}
+      onPress={onPress}
+      style={({ pressed }) => [
+        estilos.botaoIcone,
+        { backgroundColor: cores.cartao, borderColor: cores.borda, opacity: pressed ? 0.8 : 1 },
+      ]}>
+      <Ionicons name={icone} size={24} color={cores.texto} />
+    </Pressable>
   );
 }
 
@@ -183,6 +248,15 @@ const estilos = StyleSheet.create({
     gap: 16,
   },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  faixa: { width: '100%', maxWidth: 520, alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10 },
+  botaoIcone: {
+    width: ALVO_TOQUE,
+    height: ALVO_TOQUE,
+    borderRadius: ALVO_TOQUE / 2,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   botao: {
     minHeight: ALVO_TOQUE,
     borderRadius: raio.botao,
