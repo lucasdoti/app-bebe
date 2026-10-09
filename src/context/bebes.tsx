@@ -10,11 +10,20 @@ export type Bebe = {
   id: string;
   familia_id: string;
   nome: string;
-  nascimento: string;
-  sexo: Sexo;
+  status: 'gestacao' | 'nascido';
+  /** Só depois do parto. */
+  nascimento: string | null;
+  /** Pode ficar em branco na gestação ("ainda não sabemos"). */
+  sexo: Sexo | null;
+  parto_previsto: string | null;
   peso_nascer_kg: number | null;
   altura_nascer_cm: number | null;
 };
+
+/** Bebê que já nasceu: nascimento e sexo sempre preenchidos. */
+export type BebeNascido = Bebe & { status: 'nascido'; nascimento: string; sexo: Sexo };
+
+export const nasceu = (b: Bebe | null): b is BebeNascido => b?.status === 'nascido' && !!b.nascimento && !!b.sexo;
 
 type ValorBebes = {
   carregando: boolean;
@@ -26,7 +35,7 @@ type ValorBebes = {
 
 const BebesContext = createContext<ValorBebes | null>(null);
 
-const CAMPOS = 'id, familia_id, nome, nascimento, sexo, peso_nascer_kg, altura_nascer_cm';
+const CAMPOS = 'id, familia_id, nome, status, nascimento, sexo, parto_previsto, peso_nascer_kg, altura_nascer_cm';
 const chaveCache = (familiaId: string) => `bebes:${familiaId}`;
 
 export function BebesProvider({ children }: { children: ReactNode }) {
@@ -45,7 +54,7 @@ export function BebesProvider({ children }: { children: ReactNode }) {
       .from('bebes')
       .select(CAMPOS)
       .eq('familia_id', familiaId)
-      .order('nascimento');
+      .order('criado_em');
     if (error) {
       // Sem internet: usa a última lista conhecida neste aparelho.
       const cache = lerPref(chaveCache(familiaId));

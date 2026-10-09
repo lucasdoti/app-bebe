@@ -25,13 +25,21 @@ export type Registro =
   | (Base & { tipo: 'mamadeira'; detalhes: DetalhesMamadeira })
   | (Base & { tipo: 'refeicao'; detalhes: DetalhesRefeicao })
   | (Base & { tipo: 'sono'; detalhes: Record<string, never> })
-  | (Base & { tipo: 'fralda'; detalhes: DetalhesFralda });
+  | (Base & { tipo: 'fralda'; detalhes: DetalhesFralda })
+  | (Base & { tipo: 'contracao'; detalhes: Record<string, never> });
 
 export type Tipo = Registro['tipo'];
 
 export const nomeLado: Record<Lado, string> = { E: 'esquerdo', D: 'direito' };
 
 const ms = (iso: string) => new Date(iso).getTime();
+
+// "45 s" ou "1 min 10 s": contrações são medidas em segundos.
+export function duracaoSegundos(msTotal: number) {
+  const s = Math.max(0, Math.round(msTotal / 1000));
+  if (s < 60) return `${s} s`;
+  return s % 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s / 60} min`;
+}
 
 export function emAndamento(r: Registro) {
   return r.fim === null;
@@ -81,6 +89,11 @@ export function descricao(r: Registro, agora = Date.now()): { titulo: string; de
       return {
         titulo: r.fim ? 'Sono' : 'Dormindo',
         detalhe: duracao((r.fim ? ms(r.fim) : agora) - ms(r.inicio)),
+      };
+    case 'contracao':
+      return {
+        titulo: r.fim ? 'Contração' : 'Contração agora',
+        detalhe: duracaoSegundos((r.fim ? ms(r.fim) : agora) - ms(r.inicio)),
       };
     case 'fralda': {
       const d = r.detalhes;

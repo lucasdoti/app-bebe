@@ -9,6 +9,7 @@ import { useSessao } from '@/context/sessao';
 import { NOME_APP } from '@/lib/app';
 import { confirmar } from '@/lib/confirmar';
 import { linkDoConvite } from '@/lib/convite';
+import { idadeGestacional, semanasTexto } from '@/lib/gestacao';
 import { idadeTexto } from '@/lib/idade';
 import { mensagemDeErro, nomePapel, supabase } from '@/lib/supabase';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
@@ -69,7 +70,13 @@ export default function Ajustes() {
             ]}>
             <View style={{ flex: 1 }}>
               <Texto style={{ fontFamily: fontes.negrito }}>{b.nome}</Texto>
-              <Texto variante="suave">{idadeTexto(b.nascimento)}</Texto>
+              <Texto variante="suave">
+                {b.nascimento
+                  ? idadeTexto(b.nascimento)
+                  : b.parto_previsto
+                    ? 'a caminho · ' + semanasTexto(idadeGestacional(b.parto_previsto).semanas, idadeGestacional(b.parto_previsto).dias)
+                    : 'a caminho'}
+              </Texto>
             </View>
             <Ionicons name="create-outline" size={22} color={cores.textoSuave} />
           </Pressable>

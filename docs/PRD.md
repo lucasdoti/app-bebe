@@ -15,7 +15,7 @@ Um app para pai e mãe registrarem a rotina do bebê em segundos e receberem uma
 - Sugestão de roupa que considera o clima, a idade, o contexto e o histórico daquele bebê.
 - Crescimento comparado com as curvas da OMS.
 
-**Público.** Na V1, o próprio autor e pais conhecidos (uso fechado). Se der certo, publicar nas lojas depois. Cobre bebês de 0 a 3 anos e mais de um bebê por família.
+**Público.** Na V1, o próprio autor e pais conhecidos (uso fechado). Se der certo, publicar nas lojas depois. Cobre a gestação e bebês de 0 a 3 anos, com mais de um bebê por família.
 
 **Nome:** Colinho. Lembra o colo de quem cuida e combina com o ajuste de roupa do sling/colo. Antes de publicar nas lojas, conferir se o nome está livre na App Store, na Play Store e no INPI.
 
@@ -177,6 +177,18 @@ A home muda de destaque conforme a idade do bebê, calculada pela data de nascim
 
 Medidas e clima/roupa aparecem em todas as fases. Os pais podem fixar um cartão na home para não depender da fase.
 
+## Gestação (antes do nascimento)
+
+Os próprios autores estão grávidos e querem usar o app desde já, então a gestação entrou na V1 (decidido em 2026-10-13).
+
+- **Bebê a caminho:** o bebê é cadastrado com nome ou apelido e a data provável do parto, informada direto, calculada pela última menstruação (+280 dias) ou pelo ultrassom (data do exame e idade gestacional do laudo). O sexo é opcional.
+- **Home da gestação:** semanas e dias, trimestre, barra de progresso, quanto falta para o parto e o tamanho médio aproximado do bebê comparado a uma fruta ou legume.
+- **Pré-natal:** consultas, exames e ultrassons com data, horário, local, perguntas para levar e anotações. A próxima consulta aparece na home.
+- **Ultrassons:** peso fetal estimado, comprimento, batimentos e o percentil informado no laudo; gráfico do peso por semana sobre uma linha de peso médio aproximado (só referência — o app não calcula percentil fetal).
+- **Contrações:** cronômetro compartilhado (começou/acabou) com duração, intervalo e médias da última hora; avisa quando aparece o padrão 5-1-1 e lembra sempre dos sinais para ir à maternidade.
+- **Mala da maternidade:** checklist compartilhado com lista sugerida editável, por grupo (bebê, mãe, documentos, acompanhante).
+- **Nascimento:** o botão "Nasceu!" pede data, sexo, peso e altura e transforma o mesmo cadastro no bebê nascido; o histórico da gestação fica guardado.
+
 ## V2 e backlog
 
 A V2 traz vacinas, fotos e marcos; o resto fica no backlog até a V1 provar uso.
@@ -222,14 +234,16 @@ Lembretes usam Web Push, disparado por uma Edge Function do Supabase agendada co
 | --- | --- |
 | familias | id, nome, codigo_convite |
 | membros | familia_id, user_id, papel (pai, mãe) |
-| bebes | id, familia_id, nome, nascimento, sexo, peso_nascer, altura_nascer |
-| registros | id, bebe_id, autor_id, tipo (mamada, mamadeira, refeicao, sono, fralda), inicio, fim, detalhes (json) |
+| bebes | id, familia_id, nome, status (gestacao, nascido), parto_previsto, nascimento, sexo, peso_nascer, altura_nascer |
+| registros | id, bebe_id, autor_id, tipo (mamada, mamadeira, refeicao, sono, fralda, contracao), inicio, fim, detalhes (json) |
 | medidas | id, bebe_id, data, peso_kg, altura_cm, perimetro_cefalico_cm |
 | roupa_feedback | id, bebe_id, data, contexto (passeio, sono), sensacao_c, sugestao, resultado (frio, ok, calor) |
 | roupa_ajuste | bebe_id, contexto, ajuste_camadas |
 | remedios | id, bebe_id, nome, dose, intervalo_h, inicio, fim, ativo |
 | lembretes | id, bebe_id, tipo (remedio, mamada, personalizado), proximo_em, recorrencia, remedio_id |
 | push_inscricoes | user_id, endpoint, chaves, dispositivo |
+| pre_natal | id, bebe_id, tipo (consulta, exame, ultrassom), data, titulo, local, anotacoes, perguntas, peso_fetal_g, comprimento_cm, batimentos_bpm, percentil_laudo |
+| mala_itens | id, bebe_id, grupo, nome, feito |
 
 Uma tabela única de registros com campo json mantém o app simples e facilita a linha do tempo. A regra de acesso (RLS) é uma só: o usuário vê tudo cujo bebe_id pertence a uma família da qual ele é membro.
 
@@ -269,6 +283,7 @@ O maior risco é o registro ser lento demais para a madrugada; o segundo é a su
 3. Registros de mamada, sono e fralda
 4. Medidas com curvas da OMS
 5. Clima e roupa
+5b. Gestação (pré-natal, ultrassons, contrações, mala e nascimento)
 6. Remédios e lembretes (push)
 
 Cada etapa é testada no celular antes de seguir para a próxima.

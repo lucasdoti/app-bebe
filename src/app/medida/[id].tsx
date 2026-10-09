@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { Aviso, Botao, Cabecalho, Campo, Tela, Texto } from '@/components/ui';
-import { useBebes } from '@/context/bebes';
+import { nasceu, useBebes } from '@/context/bebes';
 import { useMedidas } from '@/context/medidas';
 import { confirmar } from '@/lib/confirmar';
 import { deISO, hojeISO, mascaraData, paraISO } from '@/lib/idade';
@@ -42,7 +42,7 @@ export default function MedidaForm() {
     let pesoKg = numero(peso);
     const alturaCm = numero(altura);
     const cabecaCm = numero(cabeca);
-    if (!bebeAtual) return;
+    if (!nasceu(bebeAtual)) return;
     if (!dataISO) return setErro('Data no formato DD/MM/AAAA.');
     if (dataISO > hojeISO()) return setErro('A data está no futuro.');
     if (dataISO < bebeAtual.nascimento) return setErro('A data é anterior ao nascimento.');

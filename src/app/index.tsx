@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Folha } from '@/components/folha';
+import { InicioGestacao } from '@/components/inicio-gestacao';
 import { BotaoRegistro, CartaoResumo, SeletorBebe, type NomeIcone } from '@/components/home';
 import { Botao, BotaoIcone, Cartao, Escolha, Tela, Texto } from '@/components/ui';
-import { useBebes } from '@/context/bebes';
+import { nasceu, useBebes } from '@/context/bebes';
 import { useClima } from '@/context/clima';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
@@ -41,12 +42,21 @@ type Toast = { texto: string; acao?: { titulo: string; onPress: () => void } };
 const VOLUMES = [60, 90, 120, 150, 180, 210];
 
 function corDoTipo(t: Tipo, cores: Paleta) {
-  return { mamada: cores.mamada, mamadeira: cores.mamada, refeicao: cores.mamada, sono: cores.sono, fralda: cores.fralda }[t];
+  const mapa: Record<Tipo, string> = {
+    mamada: cores.mamada,
+    mamadeira: cores.mamada,
+    refeicao: cores.mamada,
+    sono: cores.sono,
+    fralda: cores.fralda,
+    contracao: cores.mamada,
+  };
+  return mapa[t];
 }
 
 function iconeDoTipo(r: Registro): NomeIcone {
   if (r.tipo === 'refeicao') return 'food-apple-outline';
   if (r.tipo === 'sono') return 'sleep';
+  if (r.tipo === 'contracao') return 'timer-outline';
   if (r.tipo === 'fralda') return r.detalhes.penico ? 'toilet' : 'human-baby-changing-table';
   return 'baby-bottle-outline';
 }
@@ -108,7 +118,7 @@ export default function Inicio() {
       <Tela topo={topo}>
         <Cartao style={{ backgroundColor: cores.mamada, borderColor: cores.mamada, marginTop: 24 }}>
           <Texto variante="subtitulo">Vamos cadastrar o bebê?</Texto>
-          <Texto>Com o nome e a data de nascimento, o app ajusta a tela inicial para a idade.</Texto>
+          <Texto>Já nasceu ou está a caminho? Na gestação, o app acompanha as semanas, o pré-natal e a mala; depois do parto, a rotina.</Texto>
           <Botao
             titulo="Cadastrar bebê"
             variante="secundario"
@@ -118,6 +128,8 @@ export default function Inicio() {
       </Tela>
     );
   }
+
+  if (!nasceu(bebeAtual)) return <InicioGestacao bebe={bebeAtual} topo={topo} />;
 
   const f: Fase = fase(bebeAtual.nascimento);
   const nomeAutor = (id: string) => membros.find((m) => m.user_id === id)?.nome ?? 'alguém';

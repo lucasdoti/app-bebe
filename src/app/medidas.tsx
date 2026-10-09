@@ -5,7 +5,7 @@ import { Pressable, View } from 'react-native';
 
 import { formatar, GraficoCrescimento } from '@/components/grafico-crescimento';
 import { Botao, Cabecalho, Cartao, Escolha, Tela, Texto } from '@/components/ui';
-import { useBebes } from '@/context/bebes';
+import { nasceu, useBebes } from '@/context/bebes';
 import { useMedidas } from '@/context/medidas';
 import { idadeEmDias, percentil, percentilTexto, pontosDe, type Indicador } from '@/lib/crescimento';
 import { deISO, hojeISO, idadeTexto } from '@/lib/idade';
@@ -22,7 +22,7 @@ export default function Medidas() {
   const { cores } = useTema();
   const [indicador, setIndicador] = useState<Indicador>('peso');
 
-  if (!bebeAtual) return null;
+  if (!nasceu(bebeAtual)) return null;
   const pontos = pontosDe(bebeAtual, doBebe, indicador);
   const ultimo = pontos.at(-1);
 

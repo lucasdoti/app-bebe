@@ -1,4 +1,4 @@
-import { useBebes } from '@/context/bebes';
+import { nasceu, useBebes } from '@/context/bebes';
 import { useClima } from '@/context/clima';
 import { useRoupa } from '@/context/roupa';
 import { previsao6h } from '@/lib/clima';
@@ -11,7 +11,7 @@ export function useSugestao(contexto: Contexto, transporte: Transporte, tempQuar
   const { bebeAtual } = useBebes();
   const { clima } = useClima();
   const roupa = useRoupa();
-  if (!bebeAtual || !clima) return null;
+  if (!nasceu(bebeAtual) || !clima) return null;
   return sugerir({
     nome: bebeAtual.nome,
     contexto,

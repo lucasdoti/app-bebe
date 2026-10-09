@@ -22,6 +22,7 @@ const titulos: Record<Tipo, string> = {
   refeicao: 'Refeição',
   sono: 'Sono',
   fralda: 'Fralda',
+  contracao: 'Contração',
 };
 
 // Hoje e ontem; ao editar um registro mais antigo, o dia dele também aparece.
@@ -118,7 +119,7 @@ export default function RegistroForm() {
   const [cor, setCor] = useState<string | null>(fralda?.cor ?? null);
   const [consistencia, setConsistencia] = useState<string | null>(fralda?.consistencia ?? null);
   const [penico, setPenico] = useState(fralda?.penico ?? false);
-  const mostraPenico = penico || (bebeAtual ? fase(bebeAtual.nascimento) === 'crianca' : false);
+  const mostraPenico = penico || (bebeAtual?.nascimento ? fase(bebeAtual.nascimento) === 'crianca' : false);
 
   // Sono
   const [aindaDormindo, setAindaDormindo] = useState(andamento);
@@ -181,6 +182,10 @@ export default function RegistroForm() {
         if (f.getTime() > Date.now() + MINUTO) return setErro('O horário em que acordou está no futuro.');
         fim = f.toISOString();
       }
+    } else if (tipo === 'contracao') {
+      // Só o horário muda; a duração medida no cronômetro é mantida.
+      const duracaoMs = existente?.fim ? new Date(existente.fim).getTime() - new Date(existente.inicio).getTime() : MINUTO;
+      fim = new Date(inicio.getTime() + duracaoMs).toISOString();
     } else {
       const d: DetalhesFralda = { xixi: oque !== 'coco', coco: oque !== 'xixi' };
       if (d.coco && cor) d.cor = cor;

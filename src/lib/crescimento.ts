@@ -1,5 +1,5 @@
 import { OMS, PASSO_DIAS, type Indicador } from '@/data/oms';
-import type { Bebe, Sexo } from '@/context/bebes';
+import type { BebeNascido, Sexo } from '@/context/bebes';
 import type { Medida } from '@/context/medidas';
 import { dataLocal } from './idade';
 
@@ -74,7 +74,7 @@ function valorDe(m: Medida, i: Indicador) {
 }
 
 // Pontos do gráfico: medidas registradas + peso e altura ao nascer do cadastro.
-export function pontosDe(bebe: Bebe, medidas: Medida[], i: Indicador): Ponto[] {
+export function pontosDe(bebe: BebeNascido, medidas: Medida[], i: Indicador): Ponto[] {
   const pontos: Ponto[] = [];
   const aoNascer = i === 'peso' ? bebe.peso_nascer_kg : i === 'altura' ? bebe.altura_nascer_cm : null;
   if (aoNascer && !medidas.some((m) => m.data === bebe.nascimento && valorDe(m, i) !== null))
