@@ -2,6 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
+import { BotoesDaHora } from '@/components/botoes-da-hora';
 import { Cabecalho, Cartao, Tela, Texto } from '@/components/ui';
 import { useRegistros } from '@/context/registros';
 import { useAgora } from '@/hooks/use-agora';
@@ -98,6 +99,8 @@ export default function Contracoes() {
           </>
         )}
       </Cartao>
+
+      <BotoesDaHora />
 
       <Texto variante="suave">
         Vá para a maternidade a qualquer momento se a bolsa romper, houver sangramento, febre, dor forte que não passa

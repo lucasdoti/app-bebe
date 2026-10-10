@@ -15,6 +15,7 @@ import { ClimaProvider } from '@/context/clima';
 import { EnxovalProvider } from '@/context/enxoval';
 import { GestacaoProvider } from '@/context/gestacao';
 import { MedidasProvider } from '@/context/medidas';
+import { PartoProvider } from '@/context/parto';
 import { RegistrosProvider } from '@/context/registros';
 import { RemediosProvider } from '@/context/remedios';
 import { registrarServiceWorker } from '@/lib/notificacoes';
@@ -40,7 +41,9 @@ export default function RootLayout() {
                     <RemediosProvider>
                       <EnxovalProvider>
                         <VacinasProvider>
-                          <Rotas />
+                          <PartoProvider>
+                            <Rotas />
+                          </PartoProvider>
                         </VacinasProvider>
                       </EnxovalProvider>
                     </RemediosProvider>
@@ -92,6 +95,9 @@ function Rotas() {
           <Stack.Screen name="enxoval" />
           <Stack.Screen name="vacinas" />
           <Stack.Screen name="vacina/[codigo]" />
+          <Stack.Screen name="parto" />
+          <Stack.Screen name="contato/[id]" />
+          <Stack.Screen name="plano-parto" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />

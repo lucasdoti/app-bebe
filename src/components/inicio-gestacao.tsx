@@ -7,6 +7,7 @@ import { useEnxoval } from '@/context/enxoval';
 import { useVacinas } from '@/context/vacinas';
 import { CALENDARIO_MAE, situacaoMae } from '@/lib/vacinas';
 import { pontos, useGestacao } from '@/context/gestacao';
+import { useParto } from '@/context/parto';
 import { useRegistros } from '@/context/registros';
 import { useAgora } from '@/hooks/use-agora';
 import {
@@ -43,6 +44,7 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const { doBebe } = useRegistros();
   const { itens: enxoval } = useEnxoval();
   const { aplicadas } = useVacinas();
+  const { contatos, plano } = useParto();
   const agora = useAgora(30_000);
   const pecas = enxoval.reduce((s, i) => s + i.quantidade, 0);
   const roupas = enxoval.filter((i) => i.categoria === 'roupa').reduce((s, i) => s + i.quantidade, 0);
@@ -63,6 +65,24 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const mostrarMovimentos = ig.semanas >= 28 || movimentos.length > 0;
   const ultimaContagem = movimentos[0];
   const favorito = nomes.find((n) => pontos(n) > 0);
+
+  // A partir da 34ª semana o cartão sobe para o topo da tela.
+  const temObstetra = contatos.some((c) => c.papel === 'obstetra');
+  const temMaternidade = contatos.some((c) => c.papel === 'maternidade');
+  const chegouAHora = (
+    <CartaoResumo
+      cor={cores.mamada}
+      icone="hospital-building"
+      titulo="Chegou a hora"
+      valor={temObstetra && temMaternidade ? 'Ligar ou ir para a maternidade' : 'Contatos e plano de parto'}
+      detalhe={
+        temObstetra && temMaternidade
+          ? `${plano.filter((p) => p.preferencia).length} preferências no plano de parto`
+          : 'Cadastre obstetra e maternidade para ligar com um toque'
+      }
+      onPress={() => router.push('/parto')}
+    />
+  );
 
   const rodape = (
     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -94,6 +114,8 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
           Parto previsto: {deISO(parto)} · {faltamTexto(ig.faltam)}
         </Texto>
       </View>
+
+      {ig.semanas >= 34 && chegouAHora}
 
       <CartaoResumo
         cor={cores.medidas}
@@ -223,6 +245,8 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
         detalhe={ig.semanas >= 32 ? 'A partir da 32ª semana, vale deixar a mala pronta.' : 'Lista compartilhada entre vocês'}
         onPress={() => router.push('/mala')}
       />
+
+      {ig.semanas < 34 && chegouAHora}
 
       <Botao titulo="Lembretes das consultas" variante="secundario" onPress={() => router.push('/lembretes')} />
 

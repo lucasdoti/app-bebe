@@ -195,6 +195,7 @@ Os próprios autores estão grávidos e querem usar o app desde já, então a ge
 - **Movimentos do bebê (a partir da 28ª semana):** contagem até 10 movimentos com o tempo que levou, histórico compartilhado e o lembrete de procurar atendimento se o bebê mexer menos.
 - **Nomes:** lista compartilhada em que cada responsável sugere nomes e vota (amo, gosto, não); a lista se ordena pelos pontos.
 - **Enxoval:** lista compartilhada do que a família já tem, por categoria (roupas, higiene, quarto, passeio, alimentação) e, nas roupas, por tamanho (RN a 3), com quantidade ajustável e envio pelo WhatsApp. Também fica acessível depois do nascimento, em Ajustes. É o primeiro passo do "guarda-roupa do bebê" do backlog.
+- **Chegou a hora:** contatos do parto (obstetra, maternidade, doula, pediatra) com ligar, WhatsApp e rota até a maternidade com um toque, guardados no aparelho para funcionar sem internet; sinais de quando ir para a maternidade; plano de parto com preferências (quero / não quero / a decidir) compartilhável. Os botões de ligar e ir aparecem também no cronômetro de contrações, e o cartão sobe para o topo da home a partir da 34ª semana.
 - **Nascimento:** o botão "Nasceu!" pede data, sexo, peso e altura e transforma o mesmo cadastro no bebê nascido; o histórico da gestação fica guardado.
 
 ## Vacinas
@@ -264,6 +265,7 @@ Lembretes usam Web Push, disparado por uma Edge Function do Supabase agendada co
 | pre_natal | id, bebe_id, tipo (consulta, exame, ultrassom), data, titulo, local, anotacoes, perguntas, peso_fetal_g, comprimento_cm, batimentos_bpm, percentil_laudo, peso_mae_kg, pressao_sistolica, pressao_diastolica |
 | mala_itens | id, bebe_id, grupo, nome, feito |
 | enxoval_itens | id, bebe_id, categoria, nome, tamanho, quantidade |
+| contatos_parto / plano_parto_itens | id, bebe_id, papel, nome, telefone, endereco / id, bebe_id, grupo, texto, preferencia |
 | vacinas_aplicadas | id, bebe_id, para (bebe, mae), codigo, nome, data, local, lote, observacao |
 | nomes / nomes_votos | id, bebe_id, nome, sexo / nome_id, user_id, valor (2 amo, 1 gosto, −1 não) |
 
