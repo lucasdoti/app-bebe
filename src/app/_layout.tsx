@@ -99,6 +99,8 @@ function Rotas() {
           <Stack.Screen name="contato/[id]" />
           <Stack.Screen name="plano-parto" />
           <Stack.Screen name="resumo" />
+          <Stack.Screen name="gastos" />
+          <Stack.Screen name="gasto/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />

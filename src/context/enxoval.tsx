@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import type { FormaPagamento } from '@/lib/dinheiro';
 import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
@@ -68,8 +69,26 @@ export const CATEGORIAS: { valor: Categoria; titulo: string; sugestoes: string[]
 
 export const TAMANHOS: Tamanho[] = ['RN', 'P', 'M', 'G', 'GG', '1', '2', '3'];
 
+export type Gasto = {
+  id: string;
+  bebe_id: string;
+  autor_id: string;
+  tipo: 'compra' | 'presente';
+  descricao: string;
+  valor: number | null;
+  data: string;
+  categoria: Categoria | null;
+  forma_pagamento: FormaPagamento | null;
+  parcelas: number | null;
+  quem_deu: string | null;
+  agradecido: boolean;
+};
+
 type ValorEnxoval = {
   itens: ItemEnxoval[];
+  /** Compras e presentes do bebê selecionado, do mais recente para o mais antigo. */
+  gastos: Gasto[];
+  orcamento: number | null;
   recarregar: () => Promise<void>;
 };
 
@@ -82,22 +101,42 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
   const familiaId = familia?.id ?? null;
   const ids = useMemo(() => bebes.map((b) => b.id).sort().join(','), [bebes]);
   const [itens, setItens] = useState<ItemEnxoval[]>([]);
+  const [gastos, setGastos] = useState<Gasto[]>([]);
+  const [orcamentos, setOrcamentos] = useState<Record<string, number>>({});
 
   const recarregar = useCallback(async () => {
     if (!familiaId || !ids) return;
     const chave = `enxoval:${familiaId}`;
-    const { data, error } = await supabase
-      .from('enxoval_itens')
-      .select('id, bebe_id, categoria, nome, tamanho, quantidade')
-      .in('bebe_id', ids.split(','))
-      .order('criado_em');
-    if (error) {
+    const lista = ids.split(',');
+    const [it, gs, oc] = await Promise.all([
+      supabase.from('enxoval_itens').select('id, bebe_id, categoria, nome, tamanho, quantidade').in('bebe_id', lista).order('criado_em'),
+      supabase
+        .from('enxoval_gastos')
+        .select('id, bebe_id, autor_id, tipo, descricao, valor, data, categoria, forma_pagamento, parcelas, quem_deu, agradecido')
+        .in('bebe_id', lista)
+        .order('data', { ascending: false })
+        .order('criado_em', { ascending: false }),
+      supabase.from('enxoval_orcamento').select('bebe_id, valor').in('bebe_id', lista),
+    ]);
+    if (it.error || gs.error || oc.error) {
       const cache = lerPref(chave);
-      if (cache) setItens(JSON.parse(cache));
+      if (cache) {
+        const c = JSON.parse(cache);
+        // Versões antigas guardavam só a lista de itens.
+        setItens(Array.isArray(c) ? c : c.itens);
+        if (!Array.isArray(c)) {
+          setGastos(c.gastos ?? []);
+          setOrcamentos(c.orcamentos ?? {});
+        }
+      }
       return;
     }
-    setItens(data);
-    salvarPref(chave, JSON.stringify(data));
+    const listaGastos = gs.data.map((g) => ({ ...g, valor: g.valor === null ? null : Number(g.valor) }));
+    const mapa = Object.fromEntries(oc.data.map((o) => [o.bebe_id, Number(o.valor)]));
+    setItens(it.data);
+    setGastos(listaGastos);
+    setOrcamentos(mapa);
+    salvarPref(chave, JSON.stringify({ itens: it.data, gastos: listaGastos, orcamentos: mapa }));
   }, [familiaId, ids]);
 
   useEffect(() => {
@@ -109,6 +148,8 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
     const canal = supabase
       .channel(`enxoval:${familiaId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_itens' }, () => recarregar())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_gastos' }, () => recarregar())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_orcamento' }, () => recarregar())
       .subscribe();
     return () => {
       supabase.removeChannel(canal);
@@ -116,8 +157,14 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
   }, [familiaId, ids, recarregar]);
 
   const doBebe = useMemo(() => itens.filter((i) => i.bebe_id === bebeAtual?.id), [itens, bebeAtual]);
+  const gastosDoBebe = useMemo(() => gastos.filter((g) => g.bebe_id === bebeAtual?.id), [gastos, bebeAtual]);
+  const orcamento = bebeAtual ? (orcamentos[bebeAtual.id] ?? null) : null;
 
-  return <EnxovalContext.Provider value={{ itens: doBebe, recarregar }}>{children}</EnxovalContext.Provider>;
+  return (
+    <EnxovalContext.Provider value={{ itens: doBebe, gastos: gastosDoBebe, orcamento, recarregar }}>
+      {children}
+    </EnxovalContext.Provider>
+  );
 }
 
 export function useEnxoval() {

@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, Pressable, Share, Text, View } from 'react-native';
 
@@ -14,6 +15,7 @@ import {
   type Tamanho,
 } from '@/context/enxoval';
 import { confirmar } from '@/lib/confirmar';
+import { reais } from '@/lib/dinheiro';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
@@ -83,7 +85,8 @@ function BotaoQtd({ icone, rotulo, onPress }: { icone: 'minus' | 'plus'; rotulo:
 
 export default function Enxoval() {
   const { bebeAtual } = useBebes();
-  const { itens, recarregar } = useEnxoval();
+  const { itens, gastos, recarregar } = useEnxoval();
+  const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
   const { cores } = useTema();
   const [categoria, setCategoria] = useState<Categoria>('roupa');
   const [nome, setNome] = useState('');
@@ -166,6 +169,12 @@ export default function Enxoval() {
           {roupas ? ` · ${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}` : ''}
         </Texto>
         <Texto variante="suave">Os dois veem e editam a mesma lista.</Texto>
+        <Botao
+          titulo={gastoTotal ? `Gastos: ${reais(gastoTotal)}` : 'Anotar gastos e presentes'}
+          variante="secundario"
+          onPress={() => router.push('/gastos')}
+          icone={<MaterialCommunityIcons name="cash-multiple" size={20} color={cores.texto} />}
+        />
         {total > 0 && (
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1 }}>

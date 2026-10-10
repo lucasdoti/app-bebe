@@ -19,6 +19,7 @@ import {
   tamanhoNaSemana,
   trimestre,
 } from '@/lib/gestacao';
+import { reais } from '@/lib/dinheiro';
 import { deISO, hojeISO } from '@/lib/idade';
 import { duracaoSegundos } from '@/lib/registros';
 import { duracao, haQuanto, horaCurta } from '@/lib/tempo';
@@ -42,7 +43,8 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const { cores } = useTema();
   const { preNatal, mala, nomes } = useGestacao();
   const { doBebe } = useRegistros();
-  const { itens: enxoval } = useEnxoval();
+  const { itens: enxoval, gastos } = useEnxoval();
+  const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
   const { aplicadas } = useVacinas();
   const { contatos, plano } = useParto();
   const agora = useAgora(30_000);
@@ -233,7 +235,11 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
         icone="hanger"
         titulo="Enxoval"
         valor={pecas ? `${pecas} ${pecas === 1 ? 'item' : 'itens'}` : 'Começar a lista'}
-        detalhe={pecas ? `${roupas} ${roupas === 1 ? 'roupa' : 'roupas'} · toque para ver e enviar no WhatsApp` : 'O que vocês já têm, por tamanho'}
+        detalhe={
+          pecas
+            ? `${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}${gastoTotal ? ` · ${reais(gastoTotal)} gastos` : ' · toque para ver e enviar no WhatsApp'}`
+            : 'O que vocês já têm, por tamanho'
+        }
         onPress={() => router.push('/enxoval')}
       />
 
