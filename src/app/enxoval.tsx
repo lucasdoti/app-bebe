@@ -1,14 +1,16 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, Pressable, Share, Text, View } from 'react-native';
 
-import { Aviso, Botao, Cabecalho, Campo, Cartao, Tela, Texto } from '@/components/ui';
+import { Folha } from '@/components/folha';
+import { Aviso, Botao, Cabecalho, Campo, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
 import {
   CATEGORIAS,
   TAMANHOS,
   textoDoEnxoval,
+  textoDoQueFalta,
   useEnxoval,
   type Categoria,
   type ItemEnxoval,
@@ -19,6 +21,9 @@ import { reais } from '@/lib/dinheiro';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
+
+type Aba = 'temos' | 'falta';
+type Prioridade = ItemEnxoval['prioridade'];
 
 // Botões em várias linhas (as categorias não cabem lado a lado).
 function Chips<T extends string>({
@@ -83,46 +88,66 @@ function BotaoQtd({ icone, rotulo, onPress }: { icone: 'minus' | 'plus'; rotulo:
   );
 }
 
+const nomeCompleto = (i: { nome: string; tamanho: Tamanho | null }) => `${i.nome}${i.tamanho ? ` ${i.tamanho}` : ''}`;
+
 export default function Enxoval() {
   const { bebeAtual } = useBebes();
-  const { itens, gastos, recarregar } = useEnxoval();
-  const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
+  const { itens, faltam, gastos, recarregar } = useEnxoval();
+  const { aba: abaParam } = useLocalSearchParams<{ aba?: Aba }>();
   const { cores } = useTema();
+  const [aba, setAba] = useState<Aba>(abaParam === 'falta' ? 'falta' : 'temos');
   const [categoria, setCategoria] = useState<Categoria>('roupa');
   const [nome, setNome] = useState('');
   const [tamanho, setTamanho] = useState<Tamanho | null>('RN');
   const [quantidade, setQuantidade] = useState(1);
+  const [prioridade, setPrioridade] = useState<Prioridade>(null);
+  const [conseguindo, setConseguindo] = useState<ItemEnxoval | null>(null);
+  const [qtdConseguida, setQtdConseguida] = useState(1);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
   if (!bebeAtual) return null;
+  const falta = aba === 'falta';
+  const lista = falta ? faltam : itens;
   const ehRoupa = categoria === 'roupa';
-  const total = itens.reduce((s, i) => s + i.quantidade, 0);
+  const total = lista.reduce((s, i) => s + i.quantidade, 0);
   const roupas = itens.filter((i) => i.categoria === 'roupa').reduce((s, i) => s + i.quantidade, 0);
+  const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
 
   async function executar(acao: PromiseLike<{ error: { message: string } | null }>) {
     setErro(null);
     const { error } = await acao;
     if (error) setErro(mensagemDeErro(error));
     await recarregar();
+    return !error;
   }
+
+  const igualEm = (onde: ItemEnxoval[], c: Categoria, n: string, t: Tamanho | null) =>
+    onde.find((i) => i.categoria === c && i.nome.toLowerCase() === n.toLowerCase() && i.tamanho === t);
 
   async function adicionar() {
     const n = nome.trim().replace(/\s+/g, ' ');
-    if (!n) return setErro('O que vocês têm? Escolha uma sugestão ou escreva.');
+    if (!n) return setErro(falta ? 'O que está faltando? Escolha uma sugestão ou escreva.' : 'O que vocês têm? Escolha uma sugestão ou escreva.');
     const t = ehRoupa ? tamanho : null;
     // O mesmo item no mesmo tamanho soma na quantidade em vez de repetir a linha.
-    const igual = itens.find(
-      (i) => i.categoria === categoria && i.nome.toLowerCase() === n.toLowerCase() && i.tamanho === t,
-    );
+    const igual = igualEm(lista, categoria, n, t);
     await executar(
       igual
-        ? supabase.from('enxoval_itens').update({ quantidade: igual.quantidade + quantidade }).eq('id', igual.id)
-        : supabase
+        ? supabase
             .from('enxoval_itens')
-            .insert({ bebe_id: bebeAtual!.id, categoria, nome: n, tamanho: t, quantidade }),
+            .update({ quantidade: igual.quantidade + quantidade, ...(falta && prioridade && { prioridade }) })
+            .eq('id', igual.id)
+        : supabase.from('enxoval_itens').insert({
+            bebe_id: bebeAtual!.id,
+            categoria,
+            nome: n,
+            tamanho: t,
+            quantidade,
+            falta,
+            prioridade: falta ? prioridade : null,
+          }),
     );
-    setAviso(`${quantidade} ${n}${t ? ` ${t}` : ''} ${igual ? 'somado à lista' : 'adicionado'}.`);
+    setAviso(`${quantidade} ${n}${t ? ` ${t}` : ''} ${igual ? 'somado à lista' : falta ? 'na lista do que falta' : 'adicionado'}.`);
     setNome('');
     setQuantidade(1);
   }
@@ -130,7 +155,7 @@ export default function Enxoval() {
   function mudar(item: ItemEnxoval, delta: number) {
     const nova = item.quantidade + delta;
     if (nova <= 0) {
-      confirmar(`Tirar ${item.nome}${item.tamanho ? ` ${item.tamanho}` : ''} da lista?`, 'Tirar', () =>
+      confirmar(`Tirar ${nomeCompleto(item)} da lista?`, 'Tirar', () =>
         executar(supabase.from('enxoval_itens').delete().eq('id', item.id)),
       );
       return;
@@ -138,11 +163,47 @@ export default function Enxoval() {
     executar(supabase.from('enxoval_itens').update({ quantidade: nova }).eq('id', item.id));
   }
 
-  const texto = textoDoEnxoval(bebeAtual.nome, itens);
-
-  async function enviarWhatsApp() {
-    await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+  // "Conseguimos": passa a quantidade para "já temos" (somando se o item já existe lá) e tira do que falta.
+  async function conseguir(item: ItemEnxoval, n: number, depois: 'compra' | 'presente' | null) {
+    const jaTem = igualEm(itens, item.categoria, item.nome, item.tamanho);
+    const tudo = n >= item.quantidade;
+    let ok = true;
+    if (jaTem) {
+      ok = await executar(supabase.from('enxoval_itens').update({ quantidade: jaTem.quantidade + n }).eq('id', jaTem.id));
+      if (ok)
+        ok = await executar(
+          tudo
+            ? supabase.from('enxoval_itens').delete().eq('id', item.id)
+            : supabase.from('enxoval_itens').update({ quantidade: item.quantidade - n }).eq('id', item.id),
+        );
+    } else if (tudo) {
+      ok = await executar(
+        supabase.from('enxoval_itens').update({ falta: false, prioridade: null, quantidade: n }).eq('id', item.id),
+      );
+    } else {
+      ok = await executar(
+        supabase.from('enxoval_itens').insert({
+          bebe_id: bebeAtual!.id,
+          categoria: item.categoria,
+          nome: item.nome,
+          tamanho: item.tamanho,
+          quantidade: n,
+          falta: false,
+        }),
+      );
+      if (ok) ok = await executar(supabase.from('enxoval_itens').update({ quantidade: item.quantidade - n }).eq('id', item.id));
+    }
+    setConseguindo(null);
+    if (!ok) return;
+    setAviso(`${n} ${nomeCompleto(item)} ${n === 1 ? 'foi' : 'foram'} para o enxoval.`);
+    if (depois)
+      router.push({
+        pathname: '/gasto/[id]',
+        params: { id: 'novo', tipo: depois, descricao: `${n} ${nomeCompleto(item)}`, categoria: item.categoria },
+      });
   }
+
+  const texto = falta ? textoDoQueFalta(bebeAtual.nome, faltam) : textoDoEnxoval(bebeAtual.nome, itens);
 
   async function compartilhar() {
     try {
@@ -163,24 +224,47 @@ export default function Enxoval() {
     <Tela>
       <Cabecalho titulo={`Enxoval de ${bebeAtual.nome}`} />
 
+      <Escolha<Aba>
+        rotulo="Lista"
+        opcoes={[
+          { valor: 'temos', titulo: `Já temos (${itens.reduce((s, i) => s + i.quantidade, 0)})` },
+          { valor: 'falta', titulo: `Falta (${faltam.reduce((s, i) => s + i.quantidade, 0)})` },
+        ]}
+        valor={aba}
+        onChange={(a) => {
+          setAba(a);
+          setAviso(null);
+          setErro(null);
+        }}
+      />
+
       <Cartao>
         <Texto variante="subtitulo">
-          {total} {total === 1 ? 'item' : 'itens'}
-          {roupas ? ` · ${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}` : ''}
+          {falta
+            ? total
+              ? `Faltam ${total} ${total === 1 ? 'item' : 'itens'}`
+              : 'Nada faltando por enquanto'
+            : `${total} ${total === 1 ? 'item' : 'itens'}${roupas ? ` · ${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}` : ''}`}
         </Texto>
-        <Texto variante="suave">Os dois veem e editam a mesma lista.</Texto>
-        <Botao
-          titulo={gastoTotal ? `Gastos: ${reais(gastoTotal)}` : 'Anotar gastos e presentes'}
-          variante="secundario"
-          onPress={() => router.push('/gastos')}
-          icone={<MaterialCommunityIcons name="cash-multiple" size={20} color={cores.texto} />}
-        />
+        <Texto variante="suave">
+          {falta
+            ? 'Quando conseguirem um item, toquem em "Conseguimos": ele vai para o enxoval e dá para lançar o gasto ou o presente.'
+            : 'Os dois veem e editam a mesma lista.'}
+        </Texto>
+        {!falta && (
+          <Botao
+            titulo={gastoTotal ? `Gastos: ${reais(gastoTotal)}` : 'Anotar gastos e presentes'}
+            variante="secundario"
+            onPress={() => router.push('/gastos')}
+            icone={<MaterialCommunityIcons name="cash-multiple" size={20} color={cores.texto} />}
+          />
+        )}
         {total > 0 && (
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Botao
-                titulo="WhatsApp"
-                onPress={enviarWhatsApp}
+                titulo={falta ? 'Enviar o que falta' : 'WhatsApp'}
+                onPress={() => Linking.openURL(`https://wa.me/?text=${encodeURIComponent(texto)}`)}
                 icone={<MaterialCommunityIcons name="whatsapp" size={20} color={cores.textoNaPrimaria} />}
               />
             </View>
@@ -192,7 +276,7 @@ export default function Enxoval() {
       </Cartao>
 
       <Cartao>
-        <Texto variante="subtitulo">Adicionar</Texto>
+        <Texto variante="subtitulo">{falta ? 'O que está faltando' : 'Adicionar'}</Texto>
         <Chips
           opcoes={CATEGORIAS.map((c) => ({ valor: c.valor, titulo: c.titulo }))}
           valor={categoria}
@@ -220,13 +304,27 @@ export default function Enxoval() {
           </Text>
           <BotaoQtd icone="plus" rotulo="Aumentar" onPress={() => setQuantidade(quantidade + 1)} />
         </View>
-        <Botao titulo="Adicionar à lista" onPress={adicionar} />
+        {falta && (
+          <Escolha<'essencial' | 'bom'>
+            rotulo="Prioridade (opcional)"
+            opcoes={[
+              { valor: 'essencial', titulo: 'Essencial' },
+              { valor: 'bom', titulo: 'Seria bom ter' },
+            ]}
+            valor={prioridade}
+            onChange={setPrioridade}
+            aoLimpar={() => setPrioridade(null)}
+          />
+        )}
+        <Botao titulo={falta ? 'Pôr na lista do que falta' : 'Adicionar à lista'} onPress={adicionar} />
         <Aviso texto={erro} />
         <Aviso texto={aviso} tipo="info" />
       </Cartao>
 
       {CATEGORIAS.map((c) => {
-        const daCategoria = itens.filter((i) => i.categoria === c.valor);
+        const daCategoria = lista
+          .filter((i) => i.categoria === c.valor)
+          .sort((a, b) => (falta ? Number(b.prioridade === 'essencial') - Number(a.prioridade === 'essencial') : 0));
         if (!daCategoria.length) return null;
         const grupos: (Tamanho | null)[] = c.valor === 'roupa' ? [...TAMANHOS, null] : [null];
         return (
@@ -235,22 +333,39 @@ export default function Enxoval() {
               {c.titulo} · {daCategoria.reduce((s, i) => s + i.quantidade, 0)}
             </Texto>
             {grupos.map((t) => {
-              const lista = daCategoria.filter((i) => (c.valor === 'roupa' ? i.tamanho === t : true));
-              if (!lista.length) return null;
+              const doGrupo = daCategoria.filter((i) => (c.valor === 'roupa' ? i.tamanho === t : true));
+              if (!doGrupo.length) return null;
               return (
                 <View key={t ?? 'sem'} style={{ gap: 4 }}>
-                  {c.valor === 'roupa' && (
-                    <Texto variante="rotulo">{t ? `Tamanho ${t}` : 'Sem tamanho'}</Texto>
-                  )}
-                  {lista.map((i) => (
-                    <View key={i.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: ALVO_TOQUE }}>
-                      <Texto style={{ flex: 1, fontFamily: fontes.media }}>{i.nome}</Texto>
-                      <BotaoQtd icone="minus" rotulo={`Um ${i.nome} a menos`} onPress={() => mudar(i, -1)} />
-                      <Text
-                        style={{ minWidth: 32, textAlign: 'center', fontFamily: fontes.extra, fontSize: 18, color: cores.texto }}>
-                        {i.quantidade}
-                      </Text>
-                      <BotaoQtd icone="plus" rotulo={`Um ${i.nome} a mais`} onPress={() => mudar(i, 1)} />
+                  {c.valor === 'roupa' && <Texto variante="rotulo">{t ? `Tamanho ${t}` : 'Sem tamanho'}</Texto>}
+                  {doGrupo.map((i) => (
+                    <View key={i.id} style={{ gap: 6, paddingVertical: falta ? 4 : 0 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: ALVO_TOQUE }}>
+                        <View style={{ flex: 1 }}>
+                          <Texto style={{ fontFamily: fontes.media }}>
+                            {i.prioridade === 'essencial' ? '⭐ ' : ''}
+                            {i.nome}
+                          </Texto>
+                          {i.prioridade === 'bom' && <Texto variante="suave">seria bom ter</Texto>}
+                        </View>
+                        <BotaoQtd icone="minus" rotulo={`Um ${i.nome} a menos`} onPress={() => mudar(i, -1)} />
+                        <Text
+                          style={{ minWidth: 32, textAlign: 'center', fontFamily: fontes.extra, fontSize: 18, color: cores.texto }}>
+                          {i.quantidade}
+                        </Text>
+                        <BotaoQtd icone="plus" rotulo={`Um ${i.nome} a mais`} onPress={() => mudar(i, 1)} />
+                      </View>
+                      {falta && (
+                        <Botao
+                          titulo="Conseguimos"
+                          variante="secundario"
+                          icone={<MaterialCommunityIcons name="check" size={20} color={cores.texto} />}
+                          onPress={() => {
+                            setQtdConseguida(i.quantidade);
+                            setConseguindo(i);
+                          }}
+                        />
+                      )}
                     </View>
                   ))}
                 </View>
@@ -262,9 +377,42 @@ export default function Enxoval() {
 
       {total === 0 && (
         <Texto variante="suave" style={{ textAlign: 'center' }}>
-          Comece pelas roupas: escolha o item, o tamanho e a quantidade.
+          {falta
+            ? 'Anotem aqui o que ainda precisam. Dá para mandar a lista para quem perguntar.'
+            : 'Comece pelas roupas: escolha o item, o tamanho e a quantidade.'}
         </Texto>
       )}
+
+      <Folha aberta={!!conseguindo} titulo={conseguindo ? `Conseguimos: ${nomeCompleto(conseguindo)}` : ''} onFechar={() => setConseguindo(null)}>
+        {conseguindo && (
+          <>
+            {conseguindo.quantidade > 1 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Texto variante="rotulo" style={{ flex: 1 }}>
+                  Quantos? (faltavam {conseguindo.quantidade})
+                </Texto>
+                <BotaoQtd icone="minus" rotulo="Menos" onPress={() => setQtdConseguida(Math.max(1, qtdConseguida - 1))} />
+                <Text style={{ minWidth: 36, textAlign: 'center', fontFamily: fontes.extra, fontSize: 22, color: cores.texto }}>
+                  {qtdConseguida}
+                </Text>
+                <BotaoQtd
+                  icone="plus"
+                  rotulo="Mais"
+                  onPress={() => setQtdConseguida(Math.min(conseguindo.quantidade, qtdConseguida + 1))}
+                />
+              </View>
+            )}
+            <Texto variante="suave">Vai para "Já temos". Querem lançar também?</Texto>
+            <Botao titulo="Foi compra (lançar o valor)" onPress={() => conseguir(conseguindo, qtdConseguida, 'compra')} />
+            <Botao
+              titulo="Foi presente (anotar quem deu)"
+              variante="secundario"
+              onPress={() => conseguir(conseguindo, qtdConseguida, 'presente')}
+            />
+            <Botao titulo="Só passar para o enxoval" variante="texto" onPress={() => conseguir(conseguindo, qtdConseguida, null)} />
+          </>
+        )}
+      </Folha>
     </Tela>
   );
 }

@@ -43,7 +43,8 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const { cores } = useTema();
   const { preNatal, mala, nomes } = useGestacao();
   const { doBebe } = useRegistros();
-  const { itens: enxoval, gastos } = useEnxoval();
+  const { itens: enxoval, faltam, gastos } = useEnxoval();
+  const qtdFaltam = faltam.reduce((s, i) => s + i.quantidade, 0);
   const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
   const { aplicadas } = useVacinas();
   const { contatos, plano } = useParto();
@@ -237,8 +238,10 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
         valor={pecas ? `${pecas} ${pecas === 1 ? 'item' : 'itens'}` : 'Começar a lista'}
         detalhe={
           pecas
-            ? `${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}${gastoTotal ? ` · ${reais(gastoTotal)} gastos` : ' · toque para ver e enviar no WhatsApp'}`
-            : 'O que vocês já têm, por tamanho'
+            ? `${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}${qtdFaltam ? ` · faltam ${qtdFaltam}` : ''}${gastoTotal ? ` · ${reais(gastoTotal)} gastos` : ''}`
+            : qtdFaltam
+              ? `Faltam ${qtdFaltam} itens`
+              : 'O que vocês já têm e o que falta'
         }
         onPress={() => router.push('/enxoval')}
       />

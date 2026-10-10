@@ -16,6 +16,9 @@ export type ItemEnxoval = {
   nome: string;
   tamanho: Tamanho | null;
   quantidade: number;
+  /** true = ainda falta conseguir; false = já temos. */
+  falta: boolean;
+  prioridade: 'essencial' | 'bom' | null;
 };
 
 export const CATEGORIAS: { valor: Categoria; titulo: string; sugestoes: string[] }[] = [
@@ -85,7 +88,10 @@ export type Gasto = {
 };
 
 type ValorEnxoval = {
+  /** O que a família já tem. */
   itens: ItemEnxoval[];
+  /** O que ainda falta conseguir. */
+  faltam: ItemEnxoval[];
   /** Compras e presentes do bebê selecionado, do mais recente para o mais antigo. */
   gastos: Gasto[];
   orcamento: number | null;
@@ -109,7 +115,11 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
     const chave = `enxoval:${familiaId}`;
     const lista = ids.split(',');
     const [it, gs, oc] = await Promise.all([
-      supabase.from('enxoval_itens').select('id, bebe_id, categoria, nome, tamanho, quantidade').in('bebe_id', lista).order('criado_em'),
+      supabase
+        .from('enxoval_itens')
+        .select('id, bebe_id, categoria, nome, tamanho, quantidade, falta, prioridade')
+        .in('bebe_id', lista)
+        .order('criado_em'),
       supabase
         .from('enxoval_gastos')
         .select('id, bebe_id, autor_id, tipo, descricao, valor, data, categoria, forma_pagamento, parcelas, quem_deu, agradecido')
@@ -156,12 +166,13 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
     };
   }, [familiaId, ids, recarregar]);
 
-  const doBebe = useMemo(() => itens.filter((i) => i.bebe_id === bebeAtual?.id), [itens, bebeAtual]);
+  const doBebe = useMemo(() => itens.filter((i) => i.bebe_id === bebeAtual?.id && !i.falta), [itens, bebeAtual]);
+  const faltam = useMemo(() => itens.filter((i) => i.bebe_id === bebeAtual?.id && i.falta), [itens, bebeAtual]);
   const gastosDoBebe = useMemo(() => gastos.filter((g) => g.bebe_id === bebeAtual?.id), [gastos, bebeAtual]);
   const orcamento = bebeAtual ? (orcamentos[bebeAtual.id] ?? null) : null;
 
   return (
-    <EnxovalContext.Provider value={{ itens: doBebe, gastos: gastosDoBebe, orcamento, recarregar }}>
+    <EnxovalContext.Provider value={{ itens: doBebe, faltam, gastos: gastosDoBebe, orcamento, recarregar }}>
       {children}
     </EnxovalContext.Provider>
   );
@@ -193,5 +204,26 @@ export function textoDoEnxoval(nome: string, itens: ItemEnxoval[]) {
     }
   }
   linhas.push('', `Total: ${total} ${total === 1 ? 'item' : 'itens'}`);
+  return linhas.join('\n');
+}
+
+const descreverItem = (i: ItemEnxoval) => `${i.quantidade} ${i.nome}${i.tamanho ? ` (${i.tamanho})` : ''}`;
+
+// Para responder "o que o bebê precisa?": essenciais primeiro, depois o resto por categoria.
+export function textoDoQueFalta(nome: string, faltam: ItemEnxoval[]) {
+  const linhas = [`*O que ainda falta para ${nome}* 👶`];
+  const essenciais = faltam.filter((i) => i.prioridade === 'essencial');
+  if (essenciais.length) {
+    linhas.push('', '*⭐ Mais importantes*');
+    for (const i of essenciais) linhas.push(`• ${descreverItem(i)}`);
+  }
+  const resto = faltam.filter((i) => i.prioridade !== 'essencial');
+  for (const c of CATEGORIAS) {
+    const daCategoria = resto.filter((i) => i.categoria === c.valor);
+    if (!daCategoria.length) continue;
+    linhas.push('', `*${c.titulo}*`);
+    for (const i of daCategoria) linhas.push(`• ${descreverItem(i)}${i.prioridade === 'bom' ? ' _(seria bom ter)_' : ''}`);
+  }
+  linhas.push('', 'Obrigado pelo carinho! 💛');
   return linhas.join('\n');
 }

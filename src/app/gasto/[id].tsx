@@ -60,16 +60,22 @@ function voltar() {
 
 // /gasto/novo?tipo=compra|presente lança; /gasto/<id> edita ou apaga.
 export default function GastoForm() {
-  const { id, tipo: tipoParam } = useLocalSearchParams<{ id: string; tipo?: Gasto['tipo'] }>();
+  // descricao e categoria chegam preenchidas quando vêm do "Conseguimos" da lista do que falta.
+  const {
+    id,
+    tipo: tipoParam,
+    descricao: descricaoParam,
+    categoria: categoriaParam,
+  } = useLocalSearchParams<{ id: string; tipo?: Gasto['tipo']; descricao?: string; categoria?: Categoria }>();
   const { bebeAtual } = useBebes();
   const { gastos, recarregar } = useEnxoval();
   const existente = id === 'novo' ? null : (gastos.find((g) => g.id === id) ?? null);
 
   const [tipo, setTipo] = useState<Gasto['tipo']>(existente?.tipo ?? tipoParam ?? 'compra');
-  const [descricao, setDescricao] = useState(existente?.descricao ?? '');
+  const [descricao, setDescricao] = useState(existente?.descricao ?? descricaoParam ?? '');
   const [valor, setValor] = useState(paraTextoDinheiro(existente?.valor ?? null));
   const [data, setData] = useState(deISO(existente?.data ?? hojeISO()));
-  const [categoria, setCategoria] = useState<Categoria | null>(existente?.categoria ?? null);
+  const [categoria, setCategoria] = useState<Categoria | null>(existente?.categoria ?? categoriaParam ?? null);
   const [forma, setForma] = useState<FormaPagamento | null>(existente?.forma_pagamento ?? 'pix');
   const [parcelas, setParcelas] = useState<number>(existente?.parcelas ?? 1);
   const [quemDeu, setQuemDeu] = useState(existente?.quem_deu ?? '');
