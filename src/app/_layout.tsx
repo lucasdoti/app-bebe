@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 
 import { BebesProvider } from '@/context/bebes';
 import { ClimaProvider } from '@/context/clima';
+import { EnxovalProvider } from '@/context/enxoval';
 import { GestacaoProvider } from '@/context/gestacao';
 import { MedidasProvider } from '@/context/medidas';
 import { RegistrosProvider } from '@/context/registros';
@@ -36,7 +37,9 @@ export default function RootLayout() {
                 <RoupaProvider>
                   <GestacaoProvider>
                     <RemediosProvider>
-                      <Rotas />
+                      <EnxovalProvider>
+                        <Rotas />
+                      </EnxovalProvider>
                     </RemediosProvider>
                   </GestacaoProvider>
                 </RoupaProvider>
@@ -83,6 +86,7 @@ function Rotas() {
           <Stack.Screen name="remedios" />
           <Stack.Screen name="remedio/[id]" />
           <Stack.Screen name="lembretes" />
+          <Stack.Screen name="enxoval" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />

@@ -194,6 +194,7 @@ Os próprios autores estão grávidos e querem usar o app desde já, então a ge
 - **Saúde da mãe:** peso e pressão anotados nas consultas, com gráfico do peso por semana e um alerta para conferir com a obstetra quando a pressão chega a 14 por 9 ou mais.
 - **Movimentos do bebê (a partir da 28ª semana):** contagem até 10 movimentos com o tempo que levou, histórico compartilhado e o lembrete de procurar atendimento se o bebê mexer menos.
 - **Nomes:** lista compartilhada em que cada responsável sugere nomes e vota (amo, gosto, não); a lista se ordena pelos pontos.
+- **Enxoval:** lista compartilhada do que a família já tem, por categoria (roupas, higiene, quarto, passeio, alimentação) e, nas roupas, por tamanho (RN a 3), com quantidade ajustável e envio pelo WhatsApp. Também fica acessível depois do nascimento, em Ajustes. É o primeiro passo do "guarda-roupa do bebê" do backlog.
 - **Nascimento:** o botão "Nasceu!" pede data, sexo, peso e altura e transforma o mesmo cadastro no bebê nascido; o histórico da gestação fica guardado.
 
 ## V2 e backlog
@@ -251,6 +252,7 @@ Lembretes usam Web Push, disparado por uma Edge Function do Supabase agendada co
 | push_inscricoes | user_id, endpoint, chaves, dispositivo |
 | pre_natal | id, bebe_id, tipo (consulta, exame, ultrassom), data, titulo, local, anotacoes, perguntas, peso_fetal_g, comprimento_cm, batimentos_bpm, percentil_laudo, peso_mae_kg, pressao_sistolica, pressao_diastolica |
 | mala_itens | id, bebe_id, grupo, nome, feito |
+| enxoval_itens | id, bebe_id, categoria, nome, tamanho, quantidade |
 | nomes / nomes_votos | id, bebe_id, nome, sexo / nome_id, user_id, valor (2 amo, 1 gosto, −1 não) |
 
 Uma tabela única de registros com campo json mantém o app simples e facilita a linha do tempo. A regra de acesso (RLS) é uma só: o usuário vê tudo cujo bebe_id pertence a uma família da qual ele é membro.

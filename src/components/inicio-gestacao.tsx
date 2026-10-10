@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import type { Bebe } from '@/context/bebes';
+import { useEnxoval } from '@/context/enxoval';
 import { pontos, useGestacao } from '@/context/gestacao';
 import { useRegistros } from '@/context/registros';
 import { useAgora } from '@/hooks/use-agora';
@@ -38,7 +39,10 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const { cores } = useTema();
   const { preNatal, mala, nomes } = useGestacao();
   const { doBebe } = useRegistros();
+  const { itens: enxoval } = useEnxoval();
   const agora = useAgora(30_000);
+  const pecas = enxoval.reduce((s, i) => s + i.quantidade, 0);
+  const roupas = enxoval.filter((i) => i.categoria === 'roupa').reduce((s, i) => s + i.quantidade, 0);
 
   const parto = bebe.parto_previsto!;
   const ig = idadeGestacional(parto, hojeISO());
@@ -174,6 +178,15 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
         valor={favorito ? favorito.nome : nomes.length ? `${nomes.length} na lista` : 'Começar a lista'}
         detalhe={favorito ? `Favorito por enquanto · ${nomes.length} na lista` : 'Cada um sugere e vota'}
         onPress={() => router.push('/nomes')}
+      />
+
+      <CartaoResumo
+        cor={cores.clima}
+        icone="hanger"
+        titulo="Enxoval"
+        valor={pecas ? `${pecas} ${pecas === 1 ? 'item' : 'itens'}` : 'Começar a lista'}
+        detalhe={pecas ? `${roupas} ${roupas === 1 ? 'roupa' : 'roupas'} · toque para ver e enviar no WhatsApp` : 'O que vocês já têm, por tamanho'}
+        onPress={() => router.push('/enxoval')}
       />
 
       <CartaoResumo
