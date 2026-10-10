@@ -92,7 +92,8 @@ const nomeCompleto = (i: { nome: string; tamanho: Tamanho | null }) => `${i.nome
 
 export default function Enxoval() {
   const { bebeAtual } = useBebes();
-  const { itens, faltam, gastos, recarregar } = useEnxoval();
+  const { itens, faltam, gastos, reservas, cha, recarregar } = useEnxoval();
+  const reservasDo = (item: ItemEnxoval) => reservas.filter((r) => r.item_id === item.id);
   const { aba: abaParam } = useLocalSearchParams<{ aba?: Aba }>();
   const { cores } = useTema();
   const [aba, setAba] = useState<Aba>(abaParam === 'falta' ? 'falta' : 'temos');
@@ -196,10 +197,18 @@ export default function Enxoval() {
     setConseguindo(null);
     if (!ok) return;
     setAviso(`${n} ${nomeCompleto(item)} ${n === 1 ? 'foi' : 'foram'} para o enxoval.`);
+    // Presente reservado no chá: o nome de quem reservou já vai preenchido.
+    const quemReservou = [...new Set(reservasDo(item).map((r) => r.nome))].join(', ');
     if (depois)
       router.push({
         pathname: '/gasto/[id]',
-        params: { id: 'novo', tipo: depois, descricao: `${n} ${nomeCompleto(item)}`, categoria: item.categoria },
+        params: {
+          id: 'novo',
+          tipo: depois,
+          descricao: `${n} ${nomeCompleto(item)}`,
+          categoria: item.categoria,
+          ...(depois === 'presente' && quemReservou && { quemDeu: quemReservou }),
+        },
       });
   }
 
@@ -251,6 +260,14 @@ export default function Enxoval() {
             ? 'Quando conseguirem um item, toquem em "Conseguimos": ele vai para o enxoval e dá para lançar o gasto ou o presente.'
             : 'Os dois veem e editam a mesma lista.'}
         </Texto>
+        {falta && (
+          <Botao
+            titulo={cha ? `Chá de bebê: ${reservas.length} ${reservas.length === 1 ? 'reserva' : 'reservas'}` : 'Criar lista do chá de bebê'}
+            variante="secundario"
+            onPress={() => router.push('/cha')}
+            icone={<MaterialCommunityIcons name="gift-outline" size={20} color={cores.texto} />}
+          />
+        )}
         {!falta && (
           <Botao
             titulo={gastoTotal ? `Gastos: ${reais(gastoTotal)}` : 'Anotar gastos e presentes'}
@@ -347,6 +364,11 @@ export default function Enxoval() {
                             {i.nome}
                           </Texto>
                           {i.prioridade === 'bom' && <Texto variante="suave">seria bom ter</Texto>}
+                          {falta && reservasDo(i).length > 0 && (
+                            <Texto variante="suave">
+                              🎁 reservado no chá por {reservasDo(i).map((r) => `${r.nome} (${r.quantidade})`).join(', ')}
+                            </Texto>
+                          )}
                         </View>
                         <BotaoQtd icone="minus" rotulo={`Um ${i.nome} a menos`} onPress={() => mudar(i, -1)} />
                         <Text

@@ -101,6 +101,7 @@ function Rotas() {
           <Stack.Screen name="resumo" />
           <Stack.Screen name="gastos" />
           <Stack.Screen name="gasto/[id]" />
+          <Stack.Screen name="cha/index" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />
@@ -109,6 +110,8 @@ function Rotas() {
           <Stack.Screen name="entrar" />
         </Stack.Protected>
         <Stack.Screen name="convite/[codigo]" />
+        {/* Página do convidado do chá de bebê: aberta a quem tiver o link, sem login. */}
+        <Stack.Screen name="cha/[token]" />
       </Stack>
     </>
   );

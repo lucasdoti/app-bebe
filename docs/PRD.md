@@ -197,6 +197,7 @@ Os próprios autores estão grávidos e querem usar o app desde já, então a ge
 - **Nomes:** lista compartilhada em que cada responsável sugere nomes e vota (amo, gosto, não); a lista se ordena pelos pontos.
 - **Enxoval:** lista compartilhada do que a família já tem, por categoria (roupas, higiene, quarto, passeio, alimentação) e, nas roupas, por tamanho (RN a 3), com quantidade ajustável e envio pelo WhatsApp. Também fica acessível depois do nascimento, em Ajustes. É o primeiro passo do "guarda-roupa do bebê" do backlog.
 - **O que falta:** aba "Falta" no enxoval com o que a família ainda precisa (categoria, tamanho, quantidade e prioridade essencial / seria bom ter), compartilhável pelo WhatsApp com os essenciais primeiro. "Conseguimos" passa a quantidade escolhida para "Já temos" (somando se o item já existe) e oferece lançar na hora a compra ou o presente, já preenchidos.
+- **Chá de bebê:** página pública por link secreto (32 caracteres, sem login) com o nome do bebê, data, local, recado, chave Pix opcional e os itens do "Falta" que os pais escolherem. O convidado toca em "Vou dar este", informa nome, quantidade e recado; o item some ou diminui para os outros e ele pode desfazer a própria reserva (código guardado no aparelho dele). A página não mostra quem reservou; os pais veem tudo no app, podem cancelar reservas, pausar o link ou gerar um novo. Convidados só acessam o banco pelas funções `cha_publico`, `cha_reservar` e `cha_desfazer`, que exigem o token. No "Conseguimos", o presente já vem com o nome de quem reservou. Risco aceito: quem tiver o link pode fazer reservas falsas; os pais cancelam pelo app.
 - **Gastos do enxoval:** lançamento do valor total de cada compra (sem preço por item), com data, categoria opcional e forma de pagamento (Pix, débito, crédito com parcelas, dinheiro, boleto). Mostra o total gasto, orçamento opcional com barra de progresso, divisão por categoria e por forma de pagamento e as parcelas do cartão a vencer (estimativa: 1ª parcela no mês seguinte). Presentes são lançados com quem deu e valor opcional, ficam fora do total e têm a marcação "agradecido".
 - **Chegou a hora:** contatos do parto (obstetra, maternidade, doula, pediatra) com ligar, WhatsApp e rota até a maternidade com um toque, guardados no aparelho para funcionar sem internet; sinais de quando ir para a maternidade; plano de parto com preferências (quero / não quero / a decidir) compartilhável. Os botões de ligar e ir aparecem também no cronômetro de contrações, e o cartão sobe para o topo da home a partir da 34ª semana.
 - **Nascimento:** o botão "Nasceu!" pede data, sexo, peso e altura e transforma o mesmo cadastro no bebê nascido; o histórico da gestação fica guardado.
@@ -219,7 +220,7 @@ A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.
 | --- | --- | --- |
 | Vacinas com calendário do SUS | ~~V2~~ V1 | Antecipado em 2026-10-10: veja "Vacinas" |
 | Lembrete de vacina por notificação | Backlog | O calendário já calcula as datas |
-| Chá de bebê: lista de presentes com reserva | Backlog (próximo) | Página pública por link, sem login, gerada a partir do "Falta"; cada convidado marca "vou dar" e o item some para os outros. Exige acesso anônimo controlado (token no link + função no banco) |
+| Chá de bebê: lista de presentes com reserva | ~~Backlog~~ Feito | Ver "Chá de bebê" na seção Gestação |
 | Fotos e álbum de marcos | V2 | Custo de armazenamento (Supabase Storage) |
 | Marcos do desenvolvimento (sorriu, sentou, andou) | V2 | Combina com o álbum |
 | Guarda-roupa do bebê (sugestão com as peças reais) | Backlog | Precisa de cadastro de peças |
@@ -271,6 +272,7 @@ Lembretes usam Web Push, disparado por uma Edge Function do Supabase agendada co
 | enxoval_itens | id, bebe_id, categoria, nome, tamanho, quantidade |
 | enxoval_gastos / enxoval_orcamento | id, bebe_id, tipo (compra, presente), descricao, valor, data, categoria, forma_pagamento, parcelas, quem_deu, agradecido / bebe_id, valor |
 | contatos_parto / plano_parto_itens | id, bebe_id, papel, nome, telefone, endereco / id, bebe_id, grupo, texto, preferencia |
+| cha_bebe / cha_reservas | bebe_id, token, ativo, data_evento, local, mensagem, pix / id, item_id, bebe_id, nome, quantidade, mensagem, codigo |
 | vacinas_aplicadas | id, bebe_id, para (bebe, mae), codigo, nome, data, local, lote, observacao |
 | nomes / nomes_votos | id, bebe_id, nome, sexo / nome_id, user_id, valor (2 amo, 1 gosto, −1 não) |
 

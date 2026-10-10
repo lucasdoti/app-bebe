@@ -43,7 +43,7 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const { cores } = useTema();
   const { preNatal, mala, nomes } = useGestacao();
   const { doBebe } = useRegistros();
-  const { itens: enxoval, faltam, gastos } = useEnxoval();
+  const { itens: enxoval, faltam, gastos, cha, reservas } = useEnxoval();
   const qtdFaltam = faltam.reduce((s, i) => s + i.quantidade, 0);
   const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
   const { aplicadas } = useVacinas();
@@ -244,6 +244,23 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
               : 'O que vocês já têm e o que falta'
         }
         onPress={() => router.push('/enxoval')}
+      />
+
+      <CartaoResumo
+        cor={cores.mamada}
+        icone="gift-outline"
+        titulo="Chá de bebê"
+        valor={cha ? `${reservas.reduce((s, r) => s + r.quantidade, 0)} presentes reservados` : 'Lista de presentes'}
+        detalhe={
+          cha
+            ? cha.data_evento
+              ? `Dia ${new Date(cha.data_evento).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · ${cha.ativo ? 'link ativo' : 'link pausado'}`
+              : cha.ativo
+                ? 'Link ativo'
+                : 'Link pausado'
+            : 'Convidados reservam o presente por um link, sem repetir'
+        }
+        onPress={() => router.push('/cha')}
       />
 
       <CartaoResumo

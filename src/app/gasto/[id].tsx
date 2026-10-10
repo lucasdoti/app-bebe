@@ -66,7 +66,8 @@ export default function GastoForm() {
     tipo: tipoParam,
     descricao: descricaoParam,
     categoria: categoriaParam,
-  } = useLocalSearchParams<{ id: string; tipo?: Gasto['tipo']; descricao?: string; categoria?: Categoria }>();
+    quemDeu: quemDeuParam,
+  } = useLocalSearchParams<{ id: string; tipo?: Gasto['tipo']; descricao?: string; categoria?: Categoria; quemDeu?: string }>();
   const { bebeAtual } = useBebes();
   const { gastos, recarregar } = useEnxoval();
   const existente = id === 'novo' ? null : (gastos.find((g) => g.id === id) ?? null);
@@ -78,7 +79,7 @@ export default function GastoForm() {
   const [categoria, setCategoria] = useState<Categoria | null>(existente?.categoria ?? categoriaParam ?? null);
   const [forma, setForma] = useState<FormaPagamento | null>(existente?.forma_pagamento ?? 'pix');
   const [parcelas, setParcelas] = useState<number>(existente?.parcelas ?? 1);
-  const [quemDeu, setQuemDeu] = useState(existente?.quem_deu ?? '');
+  const [quemDeu, setQuemDeu] = useState(existente?.quem_deu ?? quemDeuParam ?? '');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 

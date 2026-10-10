@@ -19,6 +19,8 @@ export type ItemEnxoval = {
   /** true = ainda falta conseguir; false = já temos. */
   falta: boolean;
   prioridade: 'essencial' | 'bom' | null;
+  /** Aparece na página do chá de bebê. */
+  no_cha: boolean;
 };
 
 export const CATEGORIAS: { valor: Categoria; titulo: string; sugestoes: string[] }[] = [
@@ -87,7 +89,23 @@ export type Gasto = {
   agradecido: boolean;
 };
 
+export type Cha = {
+  bebe_id: string;
+  token: string;
+  ativo: boolean;
+  data_evento: string | null;
+  local: string | null;
+  mensagem: string | null;
+  pix: string | null;
+};
+
+export type Reserva = { id: string; item_id: string; nome: string; quantidade: number; mensagem: string | null; criado_em: string };
+
 type ValorEnxoval = {
+  /** Chá de bebê do bebê selecionado (null = ainda não criado). */
+  cha: Cha | null;
+  /** Reservas de presentes do chá, por item. */
+  reservas: Reserva[];
   /** O que a família já tem. */
   itens: ItemEnxoval[];
   /** O que ainda falta conseguir. */
@@ -109,15 +127,27 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
   const [itens, setItens] = useState<ItemEnxoval[]>([]);
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [orcamentos, setOrcamentos] = useState<Record<string, number>>({});
+  const [chas, setChas] = useState<Cha[]>([]);
+  const [reservas, setReservas] = useState<(Reserva & { bebe_id: string })[]>([]);
 
   const recarregar = useCallback(async () => {
     if (!familiaId || !ids) return;
     const chave = `enxoval:${familiaId}`;
     const lista = ids.split(',');
+    const [ch, rs] = await Promise.all([
+      supabase.from('cha_bebe').select('bebe_id, token, ativo, data_evento, local, mensagem, pix').in('bebe_id', lista),
+      supabase
+        .from('cha_reservas')
+        .select('id, item_id, bebe_id, nome, quantidade, mensagem, criado_em')
+        .in('bebe_id', lista)
+        .order('criado_em', { ascending: false }),
+    ]);
+    if (!ch.error) setChas(ch.data);
+    if (!rs.error) setReservas(rs.data);
     const [it, gs, oc] = await Promise.all([
       supabase
         .from('enxoval_itens')
-        .select('id, bebe_id, categoria, nome, tamanho, quantidade, falta, prioridade')
+        .select('id, bebe_id, categoria, nome, tamanho, quantidade, falta, prioridade, no_cha')
         .in('bebe_id', lista)
         .order('criado_em'),
       supabase
@@ -160,6 +190,8 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_itens' }, () => recarregar())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_gastos' }, () => recarregar())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_orcamento' }, () => recarregar())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cha_reservas' }, () => recarregar())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cha_bebe' }, () => recarregar())
       .subscribe();
     return () => {
       supabase.removeChannel(canal);
@@ -170,9 +202,12 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
   const faltam = useMemo(() => itens.filter((i) => i.bebe_id === bebeAtual?.id && i.falta), [itens, bebeAtual]);
   const gastosDoBebe = useMemo(() => gastos.filter((g) => g.bebe_id === bebeAtual?.id), [gastos, bebeAtual]);
   const orcamento = bebeAtual ? (orcamentos[bebeAtual.id] ?? null) : null;
+  const cha = chas.find((c) => c.bebe_id === bebeAtual?.id) ?? null;
+  const reservasDoBebe = useMemo(() => reservas.filter((r) => r.bebe_id === bebeAtual?.id), [reservas, bebeAtual]);
 
   return (
-    <EnxovalContext.Provider value={{ itens: doBebe, faltam, gastos: gastosDoBebe, orcamento, recarregar }}>
+    <EnxovalContext.Provider
+      value={{ itens: doBebe, faltam, gastos: gastosDoBebe, orcamento, cha, reservas: reservasDoBebe, recarregar }}>
       {children}
     </EnxovalContext.Provider>
   );
