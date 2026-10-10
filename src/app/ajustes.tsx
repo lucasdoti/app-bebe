@@ -127,6 +127,7 @@ export default function Ajustes() {
       <Botao titulo="Remédios e febre" variante="secundario" onPress={() => router.push('/remedios')} />
       <Botao titulo="Enxoval" variante="secundario" onPress={() => router.push('/enxoval')} />
       <Botao titulo="Vacinas" variante="secundario" onPress={() => router.push('/vacinas')} />
+      <Botao titulo="Resumo para a consulta" variante="secundario" onPress={() => router.push('/resumo')} />
 
       <Botao titulo="Sair da família" variante="texto" onPress={sairDaFamilia} />
       <Botao titulo="Sair da conta" variante="texto" onPress={sair} />

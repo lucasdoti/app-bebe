@@ -248,6 +248,7 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
 
       {ig.semanas < 34 && chegouAHora}
 
+      <Botao titulo="Resumo para a consulta" variante="secundario" onPress={() => router.push('/resumo')} />
       <Botao titulo="Lembretes das consultas" variante="secundario" onPress={() => router.push('/lembretes')} />
 
       <Botao

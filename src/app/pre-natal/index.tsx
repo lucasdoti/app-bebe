@@ -69,6 +69,7 @@ export default function PreNatalLista() {
   return (
     <Tela>
       <Cabecalho titulo="Pré-natal" />
+      <Botao titulo="Resumo para a consulta" onPress={() => router.push('/resumo')} />
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {(['consulta', 'exame', 'ultrassom'] as TipoPreNatal[]).map((t) => (

@@ -100,6 +100,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 
 - Histórico filtrável por tipo e dia.
 - Resumo de 7 dias para o pediatra: médias de mamadas, sono e fraldas e última medida.
+- Feito (2026-10-10): tela "Resumo para a consulta", compartilhável pelo WhatsApp. Para o pediatra: médias dos últimos 7 dias completos (mamadas, peito, mamadeira, sono, fraldas, febre), crescimento com percentil da OMS, remédios em uso, vacinas e perguntas (guardadas no aparelho). Na gestação: semana, peso e pressão da mãe, últimos ultrassons e exames, vacinas da gestação e as perguntas anotadas na próxima consulta. O histórico filtrável ainda falta.
 
 **RF9. Remédios e febre**
 

@@ -98,6 +98,7 @@ function Rotas() {
           <Stack.Screen name="parto" />
           <Stack.Screen name="contato/[id]" />
           <Stack.Screen name="plano-parto" />
+          <Stack.Screen name="resumo" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />

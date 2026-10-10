@@ -498,6 +498,8 @@ export default function Inicio() {
         <Botao titulo="Registrar algo que já passou" variante="secundario" onPress={() => setPainel('anterior')} />
       </Cartao>
 
+      <Botao titulo="Resumo para o pediatra" variante="secundario" onPress={() => router.push('/resumo')} />
+
       <Folha aberta={painel === 'mamada'} titulo="Mamada" onFechar={() => setPainel(null)}>
         <PainelMamada
           sugerido={sugerido}
