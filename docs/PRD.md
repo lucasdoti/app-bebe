@@ -197,13 +197,24 @@ Os próprios autores estão grávidos e querem usar o app desde já, então a ge
 - **Enxoval:** lista compartilhada do que a família já tem, por categoria (roupas, higiene, quarto, passeio, alimentação) e, nas roupas, por tamanho (RN a 3), com quantidade ajustável e envio pelo WhatsApp. Também fica acessível depois do nascimento, em Ajustes. É o primeiro passo do "guarda-roupa do bebê" do backlog.
 - **Nascimento:** o botão "Nasceu!" pede data, sexo, peso e altura e transforma o mesmo cadastro no bebê nascido; o histórico da gestação fica guardado.
 
+## Vacinas
+
+Carteirinha de vacinas com dois calendários, a pedido dos pais (antecipado da V2 em 2026-10-10):
+
+- **Bebê (0 a 4 anos):** doses do Calendário Nacional de Vacinação 2026 (Instrução Normativa do PNI), com a data recomendada de cada uma pela data de nascimento e a situação: tomada, pode tomar, em breve, atrasada (mais de 30 dias) ou fora do prazo (rotavírus e hepatite B ao nascer têm idade limite).
+- **Mãe (gestação):** influenza e covid-19 em qualquer fase, dTpa a partir da 20ª semana, VSR a partir da 28ª semana; hepatite B e dT só se o cartão estiver incompleto ("conferir cartão").
+- Marcar como tomada com data, local, lote e observação; vacinas fora do calendário (rede particular) também podem ser anotadas.
+- Cartão na home do bebê (próxima vacina ou pendências) e na home da gestação.
+- O calendário fica no app (`src/lib/vacinas.ts`) e precisa ser revisto quando o Ministério da Saúde atualizar a Instrução Normativa. O app sempre orienta conferir com a unidade de saúde.
+
 ## V2 e backlog
 
-A V2 traz vacinas, fotos e marcos; o resto fica no backlog até a V1 provar uso.
+A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.
 
 | Item | Versão | Observação |
 | --- | --- | --- |
-| Vacinas com calendário do SUS | V2 | Calendário fixo, fácil de cadastrar |
+| Vacinas com calendário do SUS | ~~V2~~ V1 | Antecipado em 2026-10-10: veja "Vacinas" |
+| Lembrete de vacina por notificação | Backlog | O calendário já calcula as datas |
 | Fotos e álbum de marcos | V2 | Custo de armazenamento (Supabase Storage) |
 | Marcos do desenvolvimento (sorriu, sentou, andou) | V2 | Combina com o álbum |
 | Guarda-roupa do bebê (sugestão com as peças reais) | Backlog | Precisa de cadastro de peças |
@@ -253,6 +264,7 @@ Lembretes usam Web Push, disparado por uma Edge Function do Supabase agendada co
 | pre_natal | id, bebe_id, tipo (consulta, exame, ultrassom), data, titulo, local, anotacoes, perguntas, peso_fetal_g, comprimento_cm, batimentos_bpm, percentil_laudo, peso_mae_kg, pressao_sistolica, pressao_diastolica |
 | mala_itens | id, bebe_id, grupo, nome, feito |
 | enxoval_itens | id, bebe_id, categoria, nome, tamanho, quantidade |
+| vacinas_aplicadas | id, bebe_id, para (bebe, mae), codigo, nome, data, local, lote, observacao |
 | nomes / nomes_votos | id, bebe_id, nome, sexo / nome_id, user_id, valor (2 amo, 1 gosto, −1 não) |
 
 Uma tabela única de registros com campo json mantém o app simples e facilita a linha do tempo. A regra de acesso (RLS) é uma só: o usuário vê tudo cujo bebe_id pertence a uma família da qual ele é membro.

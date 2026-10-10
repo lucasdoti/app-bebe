@@ -20,6 +20,7 @@ import { RemediosProvider } from '@/context/remedios';
 import { registrarServiceWorker } from '@/lib/notificacoes';
 import { RoupaProvider } from '@/context/roupa';
 import { SessaoProvider, useSessao } from '@/context/sessao';
+import { VacinasProvider } from '@/context/vacinas';
 import { TemaProvider, useTema } from '@/theme/tema';
 
 SplashScreen.preventAutoHideAsync();
@@ -38,7 +39,9 @@ export default function RootLayout() {
                   <GestacaoProvider>
                     <RemediosProvider>
                       <EnxovalProvider>
-                        <Rotas />
+                        <VacinasProvider>
+                          <Rotas />
+                        </VacinasProvider>
                       </EnxovalProvider>
                     </RemediosProvider>
                   </GestacaoProvider>
@@ -87,6 +90,8 @@ function Rotas() {
           <Stack.Screen name="remedio/[id]" />
           <Stack.Screen name="lembretes" />
           <Stack.Screen name="enxoval" />
+          <Stack.Screen name="vacinas" />
+          <Stack.Screen name="vacina/[codigo]" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
           <Stack.Screen name="familia" />

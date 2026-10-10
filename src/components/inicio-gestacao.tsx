@@ -4,6 +4,8 @@ import { View } from 'react-native';
 
 import type { Bebe } from '@/context/bebes';
 import { useEnxoval } from '@/context/enxoval';
+import { useVacinas } from '@/context/vacinas';
+import { CALENDARIO_MAE, situacaoMae } from '@/lib/vacinas';
 import { pontos, useGestacao } from '@/context/gestacao';
 import { useRegistros } from '@/context/registros';
 import { useAgora } from '@/hooks/use-agora';
@@ -40,6 +42,7 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const { preNatal, mala, nomes } = useGestacao();
   const { doBebe } = useRegistros();
   const { itens: enxoval } = useEnxoval();
+  const { aplicadas } = useVacinas();
   const agora = useAgora(30_000);
   const pecas = enxoval.reduce((s, i) => s + i.quantidade, 0);
   const roupas = enxoval.filter((i) => i.categoria === 'roupa').reduce((s, i) => s + i.quantidade, 0);
@@ -179,6 +182,29 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
         detalhe={favorito ? `Favorito por enquanto · ${nomes.length} na lista` : 'Cada um sugere e vota'}
         onPress={() => router.push('/nomes')}
       />
+
+      {(() => {
+        const tomadas = (c: string) => aplicadas.some((a) => a.para === 'mae' && a.codigo === c);
+        const pode = CALENDARIO_MAE.filter((d) => situacaoMae(d, ig.semanas, tomadas(d.codigo)) === 'agora');
+        const proxima = CALENDARIO_MAE.find((d) => situacaoMae(d, ig.semanas, tomadas(d.codigo)) === 'futura');
+        const feitas = CALENDARIO_MAE.filter((d) => tomadas(d.codigo)).length;
+        return (
+          <CartaoResumo
+            cor={cores.medidas}
+            icone="needle"
+            titulo="Vacinas da gestação"
+            valor={pode.length ? `${pode.length} para tomar agora` : proxima ? `Próxima: ${proxima.vacina.split(' (')[0]}` : 'Em dia'}
+            detalhe={
+              pode.length
+                ? pode.map((d) => d.vacina.split(' (')[0]).join(', ')
+                : proxima
+                  ? `A partir da ${proxima.semanaMin}ª semana · ${feitas} tomadas`
+                  : `${feitas} tomadas`
+            }
+            onPress={() => router.push({ pathname: '/vacinas', params: { para: 'mae' } })}
+          />
+        );
+      })()}
 
       <CartaoResumo
         cor={cores.clima}

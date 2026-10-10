@@ -12,6 +12,8 @@ import { useClima } from '@/context/clima';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
 import { useRemedios } from '@/context/remedios';
+import { useVacinas } from '@/context/vacinas';
+import { CALENDARIO_BEBE, dataRecomendada, rotuloIdade, situacaoBebe } from '@/lib/vacinas';
 import { useRoupa, type Pendente, type Resultado } from '@/context/roupa';
 import { useSessao } from '@/context/sessao';
 import { useAgora } from '@/hooks/use-agora';
@@ -80,6 +82,7 @@ export default function Inicio() {
   const roupa = useRoupa();
   const sugestaoCasa = useSugestao('casa', 'carrinho', null);
   const { situacao } = useRemedios();
+  const { aplicadas: vacinasAplicadas } = useVacinas();
   const [erroFeedback, setErroFeedback] = useState<string | null>(null);
   const { cores } = useTema();
   const r = resumo(reg.doBebe);
@@ -283,6 +286,41 @@ export default function Inicio() {
     />
   );
 
+  // Vacinas: atrasadas ou para agora primeiro; senão, a próxima do calendário.
+  const vacinas = (() => {
+    const nasc = bebeAtual.nascimento;
+    const comSituacao = CALENDARIO_BEBE.map((d) => ({
+      d,
+      s: situacaoBebe(d, nasc, vacinasAplicadas.some((a) => a.para === 'bebe' && a.codigo === d.codigo)),
+    }));
+    const pendentes = comSituacao.filter((x) => x.s === 'atrasada' || x.s === 'agora');
+    const proxima = comSituacao.find((x) => x.s === 'proxima' || x.s === 'futura');
+    const data = proxima && dataRecomendada(nasc, proxima.d.idadeMeses!);
+    return (
+      <CartaoResumo
+        key="vacinas"
+        cor={pendentes.length ? cores.mamada : cores.medidas}
+        icone="needle"
+        titulo="Vacinas"
+        valor={
+          pendentes.length
+            ? `${pendentes.length} para tomar`
+            : proxima
+              ? `Próxima: ${rotuloIdade(proxima.d.idadeMeses!).toLowerCase()}`
+              : 'Em dia'
+        }
+        detalhe={
+          pendentes.length
+            ? pendentes.slice(0, 3).map((x) => `${x.d.vacina.split(' (')[0]} ${x.d.dose.toLowerCase()}`).join(', ')
+            : proxima && data
+              ? `${proxima.d.vacina.split(' (')[0]} · ${String(data.getDate()).padStart(2, '0')}/${String(data.getMonth() + 1).padStart(2, '0')}`
+              : undefined
+        }
+        onPress={() => router.push('/vacinas')}
+      />
+    );
+  })();
+
   const medidas = (
     <CartaoResumo
       key="medidas"
@@ -413,6 +451,7 @@ export default function Inicio() {
       {fraldas}
       {clima}
       {remedio}
+      {vacinas}
       {medidas}
 
       <Cartao>
