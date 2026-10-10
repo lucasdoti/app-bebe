@@ -6,6 +6,7 @@ import { ActivityIndicator, Image, Linking, Platform, Pressable, Text, View } fr
 import { Aviso, Botao, Campo, Cartao, Tela, Texto } from '@/components/ui';
 import { CATEGORIAS } from '@/context/enxoval';
 import { NOME_APP } from '@/lib/app';
+import { linkSeguro, siteDoLink } from '@/lib/links';
 import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { horaCurta } from '@/lib/tempo';
@@ -20,6 +21,7 @@ type ItemPublico = {
   prioridade: 'essencial' | 'bom' | null;
   quantidade: number;
   reservados: number;
+  link: string | null;
 };
 type ChaPublico = {
   nome: string;
@@ -251,6 +253,18 @@ export default function ChaPublicoPagina() {
               </View>
               {esgotado && <MaterialCommunityIcons name="gift" size={26} color={cores.medidasForte} />}
             </View>
+            {!esgotado && linkSeguro(i.link) && (
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={`Ver o produto em ${siteDoLink(i.link)}`}
+                onPress={() => Linking.openURL(i.link!)}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, opacity: pressed ? 0.7 : 1 })}>
+                <MaterialCommunityIcons name="open-in-new" size={18} color={cores.texto} />
+                <Text style={{ fontFamily: fontes.negrito, fontSize: 15, color: cores.texto, textDecorationLine: 'underline' }}>
+                  Ver o produto que os pais escolheram · {siteDoLink(i.link)}
+                </Text>
+              </Pressable>
+            )}
             {!esgotado && !aberto && (
               <Botao
                 titulo="Vou dar este"

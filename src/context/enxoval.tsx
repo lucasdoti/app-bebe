@@ -21,6 +21,8 @@ export type ItemEnxoval = {
   prioridade: 'essencial' | 'bom' | null;
   /** Aparece na página do chá de bebê. */
   no_cha: boolean;
+  /** Link do produto que a família quer (http/https). */
+  link: string | null;
 };
 
 export const CATEGORIAS: { valor: Categoria; titulo: string; sugestoes: string[] }[] = [
@@ -147,7 +149,7 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
     const [it, gs, oc] = await Promise.all([
       supabase
         .from('enxoval_itens')
-        .select('id, bebe_id, categoria, nome, tamanho, quantidade, falta, prioridade, no_cha')
+        .select('id, bebe_id, categoria, nome, tamanho, quantidade, falta, prioridade, no_cha, link')
         .in('bebe_id', lista)
         .order('criado_em'),
       supabase
@@ -242,7 +244,9 @@ export function textoDoEnxoval(nome: string, itens: ItemEnxoval[]) {
   return linhas.join('\n');
 }
 
-const descreverItem = (i: ItemEnxoval) => `${i.quantidade} ${i.nome}${i.tamanho ? ` (${i.tamanho})` : ''}`;
+// Com link, ele vai na linha de baixo (o WhatsApp transforma em link clicável).
+const descreverItem = (i: ItemEnxoval, sufixo = '') =>
+  `${i.quantidade} ${i.nome}${i.tamanho ? ` (${i.tamanho})` : ''}${sufixo}${i.link ? `\n  ${i.link}` : ''}`;
 
 // Para responder "o que o bebê precisa?": essenciais primeiro, depois o resto por categoria.
 export function textoDoQueFalta(nome: string, faltam: ItemEnxoval[]) {
@@ -257,7 +261,7 @@ export function textoDoQueFalta(nome: string, faltam: ItemEnxoval[]) {
     const daCategoria = resto.filter((i) => i.categoria === c.valor);
     if (!daCategoria.length) continue;
     linhas.push('', `*${c.titulo}*`);
-    for (const i of daCategoria) linhas.push(`• ${descreverItem(i)}${i.prioridade === 'bom' ? ' _(seria bom ter)_' : ''}`);
+    for (const i of daCategoria) linhas.push(`• ${descreverItem(i, i.prioridade === 'bom' ? ' _(seria bom ter)_' : '')}`);
   }
   linhas.push('', 'Obrigado pelo carinho! 💛');
   return linhas.join('\n');

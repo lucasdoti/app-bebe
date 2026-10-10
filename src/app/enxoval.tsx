@@ -18,6 +18,7 @@ import {
 } from '@/context/enxoval';
 import { confirmar } from '@/lib/confirmar';
 import { reais } from '@/lib/dinheiro';
+import { linkSeguro, normalizarLink, siteDoLink } from '@/lib/links';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
@@ -102,6 +103,9 @@ export default function Enxoval() {
   const [tamanho, setTamanho] = useState<Tamanho | null>('RN');
   const [quantidade, setQuantidade] = useState(1);
   const [prioridade, setPrioridade] = useState<Prioridade>(null);
+  const [link, setLink] = useState('');
+  const [editandoLink, setEditandoLink] = useState<ItemEnxoval | null>(null);
+  const [textoLink, setTextoLink] = useState('');
   const [conseguindo, setConseguindo] = useState<ItemEnxoval | null>(null);
   const [qtdConseguida, setQtdConseguida] = useState(1);
   const [erro, setErro] = useState<string | null>(null);
@@ -130,13 +134,19 @@ export default function Enxoval() {
     const n = nome.trim().replace(/\s+/g, ' ');
     if (!n) return setErro(falta ? 'O que está faltando? Escolha uma sugestão ou escreva.' : 'O que vocês têm? Escolha uma sugestão ou escreva.');
     const t = ehRoupa ? tamanho : null;
+    const linkOk = falta ? normalizarLink(link) : null;
+    if (falta && link.trim() && !linkOk) return setErro('Esse link não parece válido. Copie o endereço da página do produto.');
     // O mesmo item no mesmo tamanho soma na quantidade em vez de repetir a linha.
     const igual = igualEm(lista, categoria, n, t);
     await executar(
       igual
         ? supabase
             .from('enxoval_itens')
-            .update({ quantidade: igual.quantidade + quantidade, ...(falta && prioridade && { prioridade }) })
+            .update({
+              quantidade: igual.quantidade + quantidade,
+              ...(falta && prioridade && { prioridade }),
+              ...(linkOk && { link: linkOk }),
+            })
             .eq('id', igual.id)
         : supabase.from('enxoval_itens').insert({
             bebe_id: bebeAtual!.id,
@@ -146,8 +156,10 @@ export default function Enxoval() {
             quantidade,
             falta,
             prioridade: falta ? prioridade : null,
+            link: linkOk,
           }),
     );
+    setLink('');
     setAviso(`${quantidade} ${n}${t ? ` ${t}` : ''} ${igual ? 'somado à lista' : falta ? 'na lista do que falta' : 'adicionado'}.`);
     setNome('');
     setQuantidade(1);
@@ -333,6 +345,18 @@ export default function Enxoval() {
             aoLimpar={() => setPrioridade(null)}
           />
         )}
+        {falta && (
+          <Campo
+            rotulo="Link do produto (opcional)"
+            value={link}
+            onChangeText={setLink}
+            placeholder="Cole aqui o endereço da loja"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            inputMode="url"
+          />
+        )}
         <Botao titulo={falta ? 'Pôr na lista do que falta' : 'Adicionar à lista'} onPress={adicionar} />
         <Aviso texto={erro} />
         <Aviso texto={aviso} tipo="info" />
@@ -378,6 +402,44 @@ export default function Enxoval() {
                         <BotaoQtd icone="plus" rotulo={`Um ${i.nome} a mais`} onPress={() => mudar(i, 1)} />
                       </View>
                       {falta && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          {linkSeguro(i.link) ? (
+                            <Pressable
+                              accessibilityRole="link"
+                              accessibilityLabel={`Abrir o produto em ${siteDoLink(i.link)}`}
+                              onPress={() => Linking.openURL(i.link!)}
+                              style={({ pressed }) => ({
+                                flex: 1,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 6,
+                                minHeight: 44,
+                                opacity: pressed ? 0.7 : 1,
+                              })}>
+                              <MaterialCommunityIcons name="open-in-new" size={18} color={cores.texto} />
+                              <Text numberOfLines={1} style={{ flex: 1, fontFamily: fontes.negrito, fontSize: 15, color: cores.texto, textDecorationLine: 'underline' }}>
+                                Ver produto · {siteDoLink(i.link)}
+                              </Text>
+                            </Pressable>
+                          ) : (
+                            <View style={{ flex: 1 }} />
+                          )}
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={i.link ? `Mudar o link de ${i.nome}` : `Pôr link em ${i.nome}`}
+                            onPress={() => {
+                              setTextoLink(i.link ?? '');
+                              setEditandoLink(i);
+                            }}
+                            style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8 }}>
+                            <MaterialCommunityIcons name="link-variant" size={18} color={cores.textoSuave} />
+                            <Text style={{ fontFamily: fontes.media, fontSize: 14, color: cores.textoSuave }}>
+                              {i.link ? 'Mudar link' : 'Pôr link'}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      )}
+                      {falta && (
                         <Botao
                           titulo="Conseguimos"
                           variante="secundario"
@@ -404,6 +466,44 @@ export default function Enxoval() {
             : 'Comece pelas roupas: escolha o item, o tamanho e a quantidade.'}
         </Texto>
       )}
+
+      <Folha
+        aberta={!!editandoLink}
+        titulo={editandoLink ? `Link: ${nomeCompleto(editandoLink)}` : ''}
+        onFechar={() => setEditandoLink(null)}>
+        {editandoLink && (
+          <>
+            <Campo
+              rotulo="Link do produto"
+              value={textoLink}
+              onChangeText={setTextoLink}
+              placeholder="Cole aqui o endereço da loja"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              inputMode="url"
+            />
+            <Aviso texto={erro} />
+            <Botao
+              titulo="Salvar link"
+              onPress={async () => {
+                const ok = normalizarLink(textoLink);
+                if (textoLink.trim() && !ok) return setErro('Esse link não parece válido. Copie o endereço da página do produto.');
+                if (await executar(supabase.from('enxoval_itens').update({ link: ok }).eq('id', editandoLink.id))) setEditandoLink(null);
+              }}
+            />
+            {editandoLink.link && (
+              <Botao
+                titulo="Tirar o link"
+                variante="texto"
+                onPress={async () => {
+                  if (await executar(supabase.from('enxoval_itens').update({ link: null }).eq('id', editandoLink.id))) setEditandoLink(null);
+                }}
+              />
+            )}
+          </>
+        )}
+      </Folha>
 
       <Folha aberta={!!conseguindo} titulo={conseguindo ? `Conseguimos: ${nomeCompleto(conseguindo)}` : ''} onFechar={() => setConseguindo(null)}>
         {conseguindo && (
