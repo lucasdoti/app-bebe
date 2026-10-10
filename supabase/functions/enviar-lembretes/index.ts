@@ -186,30 +186,30 @@ async function lembretesDevidos(agora: Date) {
   return avisos;
 }
 
+// O app chama pelo navegador: libera os cabeçalhos que o supabase-js envia (inclusive x-client-info).
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
   const corpo = await req.json().catch(() => ({}));
 
   // Teste a partir do app: manda só para o próprio usuário.
   if (corpo?.teste) {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '') ?? '';
     const { data } = await db.auth.getUser(token);
-    if (!data.user) return new Response('Faça login', { status: 401 });
+    if (!data.user) return Response.json({ erro: 'Faça login' }, { status: 401, headers: CORS });
     const enviados = await enviarPara([data.user.id], {
       titulo: 'Notificações do Colinho ativadas',
       corpo: 'É assim que os lembretes vão chegar.',
       tag: 'teste',
       url: '/ajustes',
     });
-    return Response.json({ enviados }, { headers: { 'Access-Control-Allow-Origin': '*' } });
-  }
-
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-      },
-    });
+    return Response.json({ enviados }, { headers: CORS });
   }
 
   if (req.headers.get('x-cron-secret') !== CRON_SECRET) return new Response('Não autorizado', { status: 401 });

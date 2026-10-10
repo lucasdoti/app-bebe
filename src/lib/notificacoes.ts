@@ -79,7 +79,12 @@ export async function desativarNotificacoes() {
 
 export async function enviarTeste(): Promise<string | null> {
   const { data, error } = await supabase.functions.invoke('enviar-lembretes', { body: { teste: true } });
-  if (error) return 'Não foi possível enviar agora. A função de lembretes já foi publicada no Supabase?';
+  if (error) {
+    const status = (error as { context?: { status?: number } }).context?.status;
+    return status
+      ? `O servidor de lembretes respondeu com erro ${status}. Confira os Logs da função no Supabase.`
+      : 'Não deu para falar com o servidor de lembretes (internet ou configuração da função).';
+  }
   return data?.enviados ? null : 'Nenhum aparelho inscrito recebeu. Tente ativar de novo.';
 }
 
