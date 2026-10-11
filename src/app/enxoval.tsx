@@ -8,6 +8,7 @@ import { Aviso, Botao, Cabecalho, Campo, Cartao, Escolha, Tela, Texto } from '@/
 import { useBebes } from '@/context/bebes';
 import {
   CATEGORIAS,
+  temTamanho,
   TAMANHOS,
   textoDoEnxoval,
   textoDoQueFalta,
@@ -114,9 +115,10 @@ export default function Enxoval() {
   if (!bebeAtual) return null;
   const falta = aba === 'falta';
   const lista = falta ? faltam : itens;
-  const ehRoupa = categoria === 'roupa';
+  const ehRoupa = temTamanho(categoria);
   const total = lista.reduce((s, i) => s + i.quantidade, 0);
   const roupas = itens.filter((i) => i.categoria === 'roupa').reduce((s, i) => s + i.quantidade, 0);
+  const especiais = itens.filter((i) => i.categoria === 'especial').reduce((s, i) => s + i.quantidade, 0);
   const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
 
   async function executar(acao: PromiseLike<{ error: { message: string } | null }>) {
@@ -265,7 +267,9 @@ export default function Enxoval() {
             ? total
               ? `Faltam ${total} ${total === 1 ? 'item' : 'itens'}`
               : 'Nada faltando por enquanto'
-            : `${total} ${total === 1 ? 'item' : 'itens'}${roupas ? ` · ${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}` : ''}`}
+            : `${total} ${total === 1 ? 'item' : 'itens'}${roupas ? ` · ${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}` : ''}${
+                especiais ? ` · ${especiais} ${especiais === 1 ? 'fantasia ou time' : 'fantasias e times'}` : ''
+              }`}
         </Texto>
         <Texto variante="suave">
           {falta
@@ -386,6 +390,7 @@ export default function Enxoval() {
                           <Texto style={{ fontFamily: fontes.media }}>
                             {i.prioridade === 'essencial' ? '⭐ ' : ''}
                             {i.nome}
+                            {c.valor !== 'roupa' && i.tamanho ? ` (${i.tamanho})` : ''}
                           </Texto>
                           {i.prioridade === 'bom' && <Texto variante="suave">seria bom ter</Texto>}
                           {falta && reservasDo(i).length > 0 && (

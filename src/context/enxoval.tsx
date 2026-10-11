@@ -6,7 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
 
-export type Categoria = 'roupa' | 'higiene' | 'quarto' | 'passeio' | 'alimentacao' | 'outros';
+export type Categoria = 'roupa' | 'especial' | 'higiene' | 'quarto' | 'passeio' | 'alimentacao' | 'outros';
+
+/** Categorias em que o tamanho importa (roupas do dia a dia e de ocasião). */
+export const temTamanho = (c: Categoria) => c === 'roupa' || c === 'especial';
 export type Tamanho = 'RN' | 'P' | 'M' | 'G' | 'GG' | '1' | '2' | '3';
 
 export type ItemEnxoval = {
@@ -40,6 +43,20 @@ export const CATEGORIAS: { valor: Categoria; titulo: string; sugestoes: string[]
       'Luvinha',
       'Touca',
       'Saída de maternidade',
+    ],
+  },
+  {
+    // Roupas de ocasião: contadas à parte para não parecerem roupas do dia a dia.
+    valor: 'especial',
+    titulo: 'Fantasias e times',
+    sugestoes: [
+      'Roupa de festa junina',
+      'Roupa de time',
+      'Fantasia de Carnaval',
+      'Roupa de Natal',
+      'Roupa de mesversário',
+      'Roupa de batizado',
+      'Fantasia de Halloween',
     ],
   },
   {
@@ -235,7 +252,8 @@ export function textoDoEnxoval(nome: string, itens: ItemEnxoval[]) {
       if (!doTamanho.length) continue;
       if (c.valor === 'roupa') linhas.push(t ? `_Tamanho ${t}_` : '_Sem tamanho_');
       for (const i of doTamanho) {
-        linhas.push(`• ${i.quantidade} ${i.nome}`);
+        // Nas roupas o tamanho já está no subtítulo; nas fantasias vai junto do nome.
+        linhas.push(`• ${i.quantidade} ${i.nome}${c.valor !== 'roupa' && i.tamanho ? ` (${i.tamanho})` : ''}`);
         total += i.quantidade;
       }
     }
