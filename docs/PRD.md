@@ -71,7 +71,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 **RF3. Alimentação**
 
 - Peito: cronômetro esquerdo/direito, troca de lado e sugestão do lado seguinte.
-- Mamadeira: volume em ml e tipo (leite materno ou fórmula).
+- Mamadeira: volume em ml e tipo (leite materno ou fórmula). Os botões de volume acompanham a idade (até 1 mês: 20 a 90 ml; 1–3 meses: 60 a 150; 3–6 meses: 120 a 210; depois: 150 a 240) e sempre incluem o último volume usado; outros valores pelo formulário.
 - Refeição sólida (a partir de 6 meses): alimento, quantidade aproximada e aceitação.
 - Registro retroativo ("mamou às 14h por 15 min").
 

@@ -21,7 +21,7 @@ import { useSugestao } from '@/hooks/use-sugestao';
 import { descricaoTempo } from '@/lib/clima';
 import { formatar } from '@/components/grafico-crescimento';
 import { percentil, percentilTexto, pontosDe } from '@/lib/crescimento';
-import { deISO, fase, idadeTexto, type Fase } from '@/lib/idade';
+import { deISO, fase, idade, idadeTexto, type Fase } from '@/lib/idade';
 import {
   descricao,
   ladoAtual,
@@ -42,7 +42,19 @@ import { useTema } from '@/theme/tema';
 type Painel = 'mamada' | 'fralda' | 'anterior' | null;
 type Toast = { texto: string; acao?: { titulo: string; onPress: () => void } };
 
-const VOLUMES = [60, 90, 120, 150, 180, 210];
+// Volumes de mamadeira que acompanham a idade (recém-nascido começa com pouco, às vezes 20–30 ml).
+// O último volume usado sempre aparece entre os botões.
+function volumesPara(idadeMeses: number, ultimo: number | null) {
+  const base =
+    idadeMeses < 1
+      ? [20, 30, 45, 60, 75, 90]
+      : idadeMeses < 3
+        ? [60, 90, 120, 150]
+        : idadeMeses < 6
+          ? [120, 150, 180, 210]
+          : [150, 180, 210, 240];
+  return ultimo && !base.includes(ultimo) ? [...base, ultimo].sort((a, b) => a - b) : base;
+}
 
 function corDoTipo(t: Tipo, cores: Paleta) {
   const mapa: Record<Tipo, string> = {
@@ -502,6 +514,10 @@ export default function Inicio() {
 
       <Folha aberta={painel === 'mamada'} titulo="Mamada" onFechar={() => setPainel(null)}>
         <PainelMamada
+          volumes={volumesPara(
+            idade(bebeAtual.nascimento).meses,
+            (reg.doBebe.find((x) => x.tipo === 'mamadeira') as Extract<Registro, { tipo: 'mamadeira' }> | undefined)?.detalhes.ml ?? null,
+          )}
           sugerido={sugerido}
           ultimoLado={ultimaMamadaPeito?.tipo === 'mamada' ? ladoAtual(ultimaMamadaPeito.detalhes) : null}
           ultimaHa={ultimaMamadaPeito ? haQuanto(ultimaMamadaPeito.inicio, new Date(agora)) : null}
@@ -604,6 +620,7 @@ function PerguntaRoupa({
 }
 
 function PainelMamada({
+  volumes,
   sugerido,
   ultimoLado,
   ultimaHa,
@@ -612,6 +629,7 @@ function PainelMamada({
   onMamadeira,
   onAnterior,
 }: {
+  volumes: number[];
   sugerido: Lado;
   ultimoLado: Lado | null;
   ultimaHa: string | null;
@@ -684,7 +702,7 @@ function PainelMamada({
         onChange={setLeite}
       />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        {VOLUMES.map((ml) => (
+        {volumes.map((ml) => (
           <Pressable
             key={ml}
             accessibilityRole="button"
