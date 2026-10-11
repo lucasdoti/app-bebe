@@ -16,9 +16,21 @@ export type Clima = {
     vento: number;
     dia: boolean;
   };
-  /** Hora atual e as 6 seguintes. */
+  /** Hora atual e as 24 seguintes. */
   horas: Hora[];
+  /** Do domingo desta semana ao sábado da próxima (14 dias). */
+  dias?: Dia[];
   obtidoEm: number;
+};
+
+export type Dia = {
+  data: string;
+  max: number;
+  min: number;
+  sensacaoMax: number;
+  sensacaoMin: number;
+  chuvaProb: number;
+  codigo: number;
 };
 
 export type Cidade = { nome: string; regiao: string; lat: number; lon: number };
@@ -29,7 +41,12 @@ export async function buscarClima({ lat, lon }: Local): Promise<Clima> {
     longitude: lon.toFixed(3),
     current: 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m',
     hourly: 'temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m',
-    forecast_hours: '7',
+    forecast_hours: '25',
+    daily:
+      'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max',
+    // A semana começa no domingo: inclui os dias que já passaram desde então, até o sábado da próxima semana.
+    past_days: String(new Date().getDay()),
+    forecast_days: String(14 - new Date().getDay()),
     timezone: 'auto',
   });
   const r = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
@@ -54,6 +71,15 @@ export async function buscarClima({ lat, lon }: Local): Promise<Clima> {
       codigo: h.weather_code[i],
       vento: h.wind_speed_10m[i],
     })),
+    dias: (j.daily.time as string[]).map((t, i) => ({
+      data: t,
+      max: j.daily.temperature_2m_max[i],
+      min: j.daily.temperature_2m_min[i],
+      sensacaoMax: j.daily.apparent_temperature_max[i],
+      sensacaoMin: j.daily.apparent_temperature_min[i],
+      chuvaProb: j.daily.precipitation_probability_max[i] ?? 0,
+      codigo: j.daily.weather_code[i],
+    })),
     obtidoEm: Date.now(),
   };
 }
@@ -73,14 +99,15 @@ export async function buscarCidades(nome: string): Promise<Cidade[]> {
 
 // Resumo das próximas 6 h para os avisos do passeio.
 export function previsao6h(c: Clima): Previsao {
-  const proximas = c.horas.slice(1);
+  const seis = c.horas.slice(0, 7);
+  const proximas = seis.slice(1);
   let minima = proximas[0];
   for (const h of proximas) if (h.sensacao < minima.sensacao) minima = h;
   return {
     queda: minima ? c.atual.sensacao - minima.sensacao : 0,
     horaMinima: minima ? minima.hora.replace(':00', 'h') : null,
-    chuva: c.atual.chuvaMm > 0 || c.horas.some((h) => h.chuvaProb >= 50),
-    ventoForte: Math.max(c.atual.vento, ...c.horas.map((h) => h.vento)) >= 25,
+    chuva: c.atual.chuvaMm > 0 || seis.some((h) => h.chuvaProb >= 50),
+    ventoForte: Math.max(c.atual.vento, ...seis.map((h) => h.vento)) >= 25,
   };
 }
 

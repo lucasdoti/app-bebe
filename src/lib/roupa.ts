@@ -15,7 +15,9 @@ export type Peca =
   | 'gorro'
   | 'manta'
   | 'pijama'
-  | 'saco';
+  | 'saco'
+  | 'shorts'
+  | 'calca';
 
 export const nomePeca: Record<Peca, string> = {
   body_curto: 'Body manga curta',
@@ -28,7 +30,12 @@ export const nomePeca: Record<Peca, string> = {
   manta: 'Manta',
   pijama: 'Pijama',
   saco: 'Saco de dormir',
+  shorts: 'Short',
+  calca: 'Calça (ou macacão leve)',
 };
+
+// Para sair, o bebê nunca vai só de body: as pernas ganham short no calor e calça no fresco.
+const COBRE_PERNAS: Peca[] = ['macacao', 'pijama', 'calca', 'shorts', 'saco'];
 
 // Acordado (em casa ou passeio): camadas pela sensação térmica.
 const FAIXAS_DIA: { min: number; camadas: string; pecas: Peca[] }[] = [
@@ -148,5 +155,17 @@ export function sugerir(e: Entrada): Sugestao | null {
   if (e.contexto === 'passeio' && e.transporte === 'carro' && FAIXAS_DIA[i].pecas.includes('casaco_grosso'))
     avisos.push('Na cadeirinha, tire o casaco grosso e cubra com a manta por cima do cinto.');
 
-  return { pecas: FAIXAS_DIA[i].pecas, titulo: FAIXAS_DIA[i].pecas.map((p) => nomePeca[p]).join(' + '), motivos, avisos };
+  // Em casa pode ficar só de body; para sair, algo nas pernas: short no calor, calça no fresco.
+  let pecas = FAIXAS_DIA[i].pecas;
+  if (e.contexto === 'passeio' && !pecas.some((p) => COBRE_PERNAS.includes(p))) {
+    const pernas: Peca = i === 0 ? 'shorts' : 'calca';
+    pecas = [...pecas, pernas];
+    motivos.push(
+      pernas === 'shorts'
+        ? 'Para sair, mesmo no calor, vai com um short por cima do body.'
+        : 'Para sair, as pernas vão cobertas: calça ou um macacão leve.',
+    );
+  }
+
+  return { pecas, titulo: pecas.map((p) => nomePeca[p]).join(' + '), motivos, avisos };
 }

@@ -27,6 +27,10 @@ export function Bonequinho({ pecas, tamanho = 150 }: { pecas: Peca[]; tamanho?: 
   if (tem('pijama')) torso = bracos = pernas = cores.mamada;
   if (tem('macacao')) torso = bracos = pernas = cores.sono;
   if (tem('meia')) pes = cores.fralda;
+  // Calça e short num azul-jeans suave, para não confundir com o macacão lilás.
+  const corCalca = noite ? '#5A6890' : '#AFC4E8';
+  if (tem('calca')) pernas = corCalca;
+  const shorts = tem('shorts');
   const casaco = tem('casaco') || tem('casaco_grosso');
   const traco = { stroke: contorno, strokeWidth: 1.5 };
 
@@ -56,6 +60,8 @@ export function Bonequinho({ pecas, tamanho = 150 }: { pecas: Peca[]; tamanho?: 
 
       {/* Tronco */}
       <Rect x={34} y={56} width={52} height={52} rx={18} fill={torso} {...traco} />
+      {/* Short por cima do body, cobrindo o quadril e o começo das pernas */}
+      {shorts && <Rect x={37} y={94} width={46} height={28} rx={10} fill={corCalca} {...traco} />}
 
       {tem('saco') && (
         <Path d="M32 66 Q32 58 40 58 L80 58 Q88 58 88 66 L94 136 Q94 144 86 144 L34 144 Q26 144 26 136 Z" fill={cores.sono} {...traco} />

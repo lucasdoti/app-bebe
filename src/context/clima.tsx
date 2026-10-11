@@ -110,7 +110,8 @@ export function ClimaProvider({ children }: { children: ReactNode }) {
         setLocal(l);
         salvarPref('clima_local', JSON.stringify(l));
       }
-      if (!cache || Date.now() - cache.obtidoEm > VALIDADE_MS || l !== salvo) carregar(l);
+      // Sem a semana no cache = formato antigo (só 6 horas): busca de novo.
+      if (!cache || !cache.dias || Date.now() - cache.obtidoEm > VALIDADE_MS || l !== salvo) carregar(l);
     })();
     const id = setInterval(() => {
       const l = lerJSON<Local>('clima_local');

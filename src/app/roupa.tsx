@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Bonequinho } from '@/components/bonequinho';
 import { Aviso, Botao, Cabecalho, Campo, Cartao, Escolha, Tela, Texto } from '@/components/ui';
@@ -8,7 +8,8 @@ import { useBebes } from '@/context/bebes';
 import { useClima } from '@/context/clima';
 import { useRoupa } from '@/context/roupa';
 import { useSugestao } from '@/hooks/use-sugestao';
-import { buscarCidades, descricaoTempo, type Cidade } from '@/lib/clima';
+import { buscarCidades, descricaoTempo, type Cidade, type Dia } from '@/lib/clima';
+import { hojeISO } from '@/lib/idade';
 import { nomePeca, type Contexto, type Transporte } from '@/lib/roupa';
 import { lerPref, salvarPref } from '@/lib/storage';
 import { horaCurta } from '@/lib/tempo';
@@ -16,6 +17,77 @@ import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
 const graus = (t: number) => `${Math.round(t)}°`;
+
+const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+// Semana de domingo a sábado: esta e a próxima, com máxima, mínima e chance de chuva.
+function Semana({ dias }: { dias: Dia[] }) {
+  const { cores } = useTema();
+  const [qual, setQual] = useState<'esta' | 'proxima'>('esta');
+  const hoje = hojeISO();
+  const semana = dias.slice(qual === 'esta' ? 0 : 7, qual === 'esta' ? 7 : 14);
+  if (!semana.length) return null;
+  return (
+    <Cartao>
+      <Texto variante="subtitulo">Semana</Texto>
+      <Escolha
+        rotulo="Mostrar"
+        opcoes={[
+          { valor: 'esta', titulo: 'Esta semana' },
+          { valor: 'proxima', titulo: 'Próxima' },
+        ]}
+        valor={qual}
+        onChange={(v) => setQual(v as 'esta' | 'proxima')}
+      />
+      <View style={{ flexDirection: 'row', gap: 4 }}>
+        {semana.map((d) => {
+          const t = descricaoTempo(d.codigo);
+          const ehHoje = d.data === hoje;
+          const passou = d.data < hoje;
+          const [a, m, dd] = d.data.split('-').map(Number);
+          return (
+            <View
+              key={d.data}
+              accessibilityLabel={`${DIAS_SEMANA[new Date(a, m - 1, dd).getDay()]} ${dd}: ${t.texto}, máxima ${Math.round(d.max)}, mínima ${Math.round(d.min)}`}
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                gap: 3,
+                paddingVertical: 8,
+                borderRadius: 14,
+                backgroundColor: ehHoje ? cores.clima : 'transparent',
+                opacity: passou ? 0.45 : 1,
+              }}>
+              <Text style={{ fontFamily: fontes.negrito, fontSize: 12, color: ehHoje ? cores.textoNaPrimaria : cores.texto }}>
+                {ehHoje ? 'hoje' : DIAS_SEMANA[new Date(a, m - 1, dd).getDay()]}
+              </Text>
+              <Text style={{ fontFamily: fontes.regular, fontSize: 11, color: ehHoje ? cores.textoNaPrimaria : cores.textoSuave }}>
+                {dd}
+              </Text>
+              <MaterialCommunityIcons name={t.icone} size={22} color={ehHoje ? cores.textoNaPrimaria : cores.texto} />
+              <Text style={{ fontFamily: fontes.extra, fontSize: 14, color: ehHoje ? cores.textoNaPrimaria : cores.texto }}>
+                {graus(d.max)}
+              </Text>
+              <Text style={{ fontFamily: fontes.media, fontSize: 12, color: ehHoje ? cores.textoNaPrimaria : cores.textoSuave }}>
+                {graus(d.min)}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: fontes.regular,
+                  fontSize: 10,
+                  color: ehHoje ? cores.textoNaPrimaria : cores.textoSuave,
+                  opacity: d.chuvaProb >= 30 ? 1 : 0,
+                }}>
+                💧{d.chuvaProb}%
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+      <Texto variante="suave">Máxima e mínima do dia; os dias que já passaram ficam apagados.</Texto>
+    </Cartao>
+  );
+}
 
 function quandoTexto(d: Date) {
   const hoje = new Date();
@@ -90,29 +162,29 @@ export default function Roupa() {
             {local?.nome ?? 'Sua localização'} · vento {Math.round(clima.atual.vento)} km/h · umidade{' '}
             {clima.atual.umidade}% · atualizado às {horaCurta(new Date(clima.obtidoEm))}
           </Text>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            {clima.horas.slice(1, 7).map((h) => {
+          <Text style={{ fontFamily: fontes.negrito, fontSize: 14, color: cores.textoNaPrimaria }}>Próximas 24 horas</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingRight: 8 }}>
+            {clima.horas.slice(1, 25).map((h, i) => {
               const t = descricaoTempo(h.codigo);
+              const meiaNoite = h.hora === '00:00';
               return (
-                <View key={h.hora} style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-                  <Text style={{ fontFamily: fontes.media, fontSize: 12, color: cores.textoNaPrimaria }}>
-                    {h.hora.replace(':00', 'h')}
+                <View key={`${h.hora}${i}`} style={{ alignItems: 'center', gap: 2, minWidth: 40 }}>
+                  <Text style={{ fontFamily: meiaNoite ? fontes.extra : fontes.media, fontSize: 12, color: cores.textoNaPrimaria }}>
+                    {meiaNoite ? 'amanhã' : h.hora.replace(':00', 'h')}
                   </Text>
-                  <MaterialCommunityIcons name={t.icone} size={20} color={cores.textoNaPrimaria} />
-                  <Text style={{ fontFamily: fontes.negrito, fontSize: 14, color: cores.textoNaPrimaria }}>
+                  <MaterialCommunityIcons name={t.icone} size={22} color={cores.textoNaPrimaria} />
+                  <Text style={{ fontFamily: fontes.negrito, fontSize: 15, color: cores.textoNaPrimaria }}>
                     {graus(h.sensacao)}
                   </Text>
-                  {h.chuvaProb >= 30 && (
-                    <Text style={{ fontFamily: fontes.regular, fontSize: 11, color: cores.textoNaPrimaria }}>
-                      {h.chuvaProb}%
-                    </Text>
-                  )}
+                  <Text style={{ fontFamily: fontes.regular, fontSize: 11, color: cores.textoNaPrimaria, opacity: h.chuvaProb >= 30 ? 1 : 0 }}>
+                    💧{h.chuvaProb}%
+                  </Text>
                 </View>
               );
             })}
-          </View>
+          </ScrollView>
           <Texto variante="suave" style={{ color: cores.textoNaPrimaria }}>
-            Temperaturas por hora: sensação térmica.
+            Arraste para o lado. Temperaturas por hora: sensação térmica.
           </Texto>
         </Cartao>
       ) : (
@@ -123,6 +195,8 @@ export default function Roupa() {
           </Texto>
         </Cartao>
       )}
+
+      {clima?.dias && clima.dias.length >= 7 && <Semana dias={clima.dias} />}
 
       <Aviso texto={erro} />
 

@@ -94,6 +94,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 **RF7. Clima e roupa**
 
 - Clima atual e das próximas horas pela localização do celular.
+- Previsão das próximas 24 horas, hora a hora, e da semana de domingo a sábado (esta e a próxima), com máxima, mínima e chance de chuva.
 - Sugestão de camadas e feedback após o uso (detalhes na seção seguinte).
 
 **RF8. Histórico e resumo**
@@ -153,6 +154,7 @@ A sugestão parte de uma regra fixa por temperatura e é calibrada por bebê com
 **3. Ajustes de contexto**
 
 - Sling ou colo: uma camada a menos (o corpo do adulto aquece).
+- Para sair, nunca só de body (sugestão de uma mãe em 2026-10-11): no passeio as pernas vão cobertas, com short na faixa de calor e calça (ou macacão leve) na faixa seguinte; em casa pode ficar só de body.
 - Vento forte ou chuva: casaco corta-vento ou capa no carrinho.
 - Queda de 5 °C ou mais na previsão do passeio: aviso "leve um casaco extra".
 - Dormindo: sugestão de saco de dormir pelo TOG, a partir da temperatura do quarto informada pelos pais. Por segurança, o sono não ganha a camada extra do recém-nascido e sempre lembra do berço livre (sem gorro, manta solta ou travesseiro).
