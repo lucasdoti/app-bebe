@@ -7,7 +7,15 @@ import { useBebes } from '@/context/bebes';
 import { useRegistros } from '@/context/registros';
 import { confirmar } from '@/lib/confirmar';
 import { fase } from '@/lib/idade';
-import { temposPorLado, type DetalhesFralda, type Lado, type Leite, type Registro, type Tipo } from '@/lib/registros';
+import {
+  observacaoDe,
+  temposPorLado,
+  type DetalhesFralda,
+  type Lado,
+  type Leite,
+  type Registro,
+  type Tipo,
+} from '@/lib/registros';
 import { lerPref } from '@/lib/storage';
 import { combinar, diasAtras, horaCurta, mascaraHora, MINUTO, rotuloDia } from '@/lib/tempo';
 
@@ -81,7 +89,10 @@ export default function RegistroForm() {
   const andamento = existente ? existente.fim === null : false;
 
   const agora = new Date();
-  const inicioBase = existente ? new Date(existente.inicio) : new Date(agora.getTime() - 15 * MINUTO);
+  // Mamada e sono anteriores costumam ter começado há pouco; fralda e o resto, agora.
+  const inicioBase = existente
+    ? new Date(existente.inicio)
+    : new Date(agora.getTime() - (tipo === 'mamada' || tipo === 'sono' ? 15 * MINUTO : 0));
   const fimBase = existente?.fim ? new Date(existente.fim) : agora;
 
   const [dia, setDia] = useState(String(diasAtras(inicioBase)));
@@ -127,6 +138,13 @@ export default function RegistroForm() {
   // Sono
   const [aindaDormindo, setAindaDormindo] = useState(andamento);
 
+  // Comentário livre, em qualquer tipo de registro (fica junto dos detalhes).
+  const [observacao, setObservacao] = useState(observacaoDe(existente) ?? '');
+  const comObservacao = <T extends object>(d: T): T => {
+    const { observacao: _antiga, ...resto } = d as T & { observacao?: string };
+    return (observacao.trim() ? { ...resto, observacao: observacao.trim().slice(0, 300) } : resto) as T;
+  };
+
   function salvar() {
     setErro(null);
     const inicio = combinar(Number(dia), hora);
@@ -138,9 +156,9 @@ export default function RegistroForm() {
     if (existente && andamento && !(existente.tipo === 'sono' && !aindaDormindo)) {
       if (existente.tipo === 'mamada') {
         const lados = existente.detalhes.lados.map((s, i) => (i === 0 ? { ...s, inicio: ini } : s));
-        atualizar(existente.id, { inicio: ini, detalhes: { lados } });
+        atualizar(existente.id, { inicio: ini, detalhes: comObservacao({ ...existente.detalhes, lados }) });
       } else {
-        atualizar(existente.id, { inicio: ini });
+        atualizar(existente.id, { inicio: ini, detalhes: comObservacao(existente.detalhes) } as Partial<Registro>);
       }
       return voltar();
     }
@@ -198,6 +216,7 @@ export default function RegistroForm() {
       detalhes = d;
     }
 
+    detalhes = comObservacao(detalhes);
     if (existente) atualizar(existente.id, { inicio: ini, fim, detalhes } as Partial<Registro>);
     else criar({ tipo, inicio: ini, fim, detalhes } as Parameters<typeof criar>[0]);
     voltar();
@@ -361,7 +380,7 @@ export default function RegistroForm() {
               />
               <Escolha
                 rotulo="Consistência (opcional)"
-                opcoes={['líquido', 'pastoso', 'firme'].map((c) => ({
+                opcoes={['líquido', 'mole', 'pastoso', 'duro'].map((c) => ({
                   valor: c,
                   titulo: c[0].toUpperCase() + c.slice(1),
                 }))}
@@ -384,6 +403,24 @@ export default function RegistroForm() {
           )}
         </>
       )}
+
+      <Campo
+        rotulo="Observação (opcional)"
+        value={observacao}
+        onChangeText={setObservacao}
+        placeholder={
+          tipo === 'fralda'
+            ? 'Ex.: assadura leve, cocô com muco, xixi escuro'
+            : tipo === 'sono'
+              ? 'Ex.: acordou chorando, dormiu no colo'
+              : tipo === 'mamada' || tipo === 'mamadeira'
+                ? 'Ex.: regurgitou, pegou bem o peito'
+                : 'O que quiser anotar'
+        }
+        multiline
+        maxLength={300}
+        style={{ minHeight: 80, paddingTop: 14, textAlignVertical: 'top' }}
+      />
 
       <Aviso texto={erro} />
       <Botao titulo="Salvar" onPress={salvar} />

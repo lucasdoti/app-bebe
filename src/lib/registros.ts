@@ -12,6 +12,12 @@ export type DetalhesRefeicao = {
 };
 export type DetalhesFralda = { xixi: boolean; coco: boolean; cor?: string; consistencia?: string; penico?: boolean };
 
+// Comentário livre que qualquer registro pode ter (guardado dentro de "detalhes").
+export function observacaoDe(r: { detalhes: object } | null | undefined): string | undefined {
+  const o = (r?.detalhes as { observacao?: unknown } | undefined)?.observacao;
+  return typeof o === 'string' && o.trim() ? o : undefined;
+}
+
 type Base = {
   id: string;
   bebe_id: string;

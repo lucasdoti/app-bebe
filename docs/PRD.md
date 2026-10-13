@@ -82,7 +82,8 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 
 **RF5. Fraldas**
 
-- Xixi, cocô ou ambos, com cor e consistência opcionais.
+- Xixi, cocô ou ambos, com cor e consistência opcionais (líquido, mole, pastoso, duro).
+- Qualquer registro (fralda, mamada, sono...) pode ter uma observação livre de até 300 caracteres, mostrada na linha do tempo.
 - Contagem do dia.
 
 **RF6. Medidas**

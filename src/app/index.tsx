@@ -27,6 +27,7 @@ import {
   ladoAtual,
   ladoSugerido,
   nomeLado,
+  observacaoDe,
   resumo,
   temposPorLado,
   type Lado,
@@ -503,6 +504,11 @@ export default function Inicio() {
                   {x.fim === null && x.tipo !== 'sono' ? ' (agora)' : ''}
                 </Texto>
                 <Texto variante="suave">{[d.detalhe, `por ${nomeAutor(x.autor_id)}`].filter(Boolean).join(' · ')}</Texto>
+                {observacaoDe(x) && (
+                  <Texto variante="suave" numberOfLines={2} style={{ fontStyle: 'italic' }}>
+                    “{observacaoDe(x)}”
+                  </Texto>
+                )}
               </View>
             </Pressable>
           );
@@ -537,6 +543,10 @@ export default function Inicio() {
       <Folha aberta={painel === 'fralda'} titulo="Fralda" onFechar={() => setPainel(null)}>
         <PainelFralda
           mostraPenico={f === 'crianca'}
+          onComDetalhes={() => {
+            setPainel(null);
+            novoRegistro('fralda');
+          }}
           onRegistrar={(xixi, coco, penico) => {
             const novo = reg.fralda({ xixi, coco, ...(penico && { penico: true }) });
             const texto = xixi && coco ? 'Xixi e cocô' : coco ? 'Cocô' : 'Xixi';
@@ -732,9 +742,11 @@ function PainelMamada({
 function PainelFralda({
   mostraPenico,
   onRegistrar,
+  onComDetalhes,
 }: {
   mostraPenico: boolean;
   onRegistrar: (xixi: boolean, coco: boolean, penico: boolean) => void;
+  onComDetalhes: () => void;
 }) {
   const [penico, setPenico] = useState(false);
   const opcoes: [string, boolean, boolean][] = [
@@ -758,7 +770,8 @@ function PainelFralda({
       {opcoes.map(([titulo, xixi, coco]) => (
         <Botao key={titulo} titulo={titulo} variante="secundario" onPress={() => onRegistrar(xixi, coco, penico)} />
       ))}
-      <Texto variante="suave">Cor e consistência do cocô podem ser adicionadas depois, tocando no registro.</Texto>
+      <Botao titulo="Com consistência ou observação" variante="texto" onPress={onComDetalhes} />
+      <Texto variante="suave">Também dá para completar depois, tocando no registro na linha do tempo.</Texto>
     </>
   );
 }
