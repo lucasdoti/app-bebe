@@ -1,10 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
+import { AvisoFicha } from '@/components/aviso-ficha';
 import { Aviso, Botao, Cabecalho, Campo, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
 import { useRemedios } from '@/context/remedios';
+import { useSaude } from '@/context/saude';
 import { confirmar } from '@/lib/confirmar';
+import { itensNaLista } from '@/lib/saude';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
 import { combinar, diasAtras, horaCurta, mascaraHora, rotuloDia } from '@/lib/tempo';
 
@@ -33,8 +36,21 @@ export default function RemedioForm() {
   const [hora, setHora] = useState(horaCurta(inicioBase));
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const { remediosEvitar, alergias } = useSaude();
+  // Remédio que aparece na lista "a evitar" ou nas alergias da ficha de saúde.
+  const naLista = [...itensNaLista(nome, remediosEvitar), ...itensNaLista(nome, alergias)];
 
-  async function salvar() {
+  function salvar() {
+    if (naLista.length && nome.trim())
+      return confirmar(
+        `Atenção: "${nome.trim()}" parece estar na ficha de saúde de ${bebeAtual?.nome} (${naLista.map((i) => i.nome).join(', ')}). Confira com o médico antes de dar. Salvar mesmo assim?`,
+        'Salvar mesmo assim',
+        gravar,
+      );
+    gravar();
+  }
+
+  async function gravar() {
     setErro(null);
     if (!bebeAtual) return;
     const horas = Number((intervalo === 'outro' ? intervaloOutro : intervalo).replace(',', '.'));
@@ -88,6 +104,9 @@ export default function RemedioForm() {
     <Tela>
       <Cabecalho titulo={existente ? existente.nome : 'Novo remédio'} />
       <Campo rotulo="Remédio" value={nome} onChangeText={setNome} placeholder="Ex.: Paracetamol" autoCapitalize="sentences" />
+      {naLista.length > 0 && (
+        <AvisoFicha texto={`Está na ficha de saúde: ${naLista.map((i) => i.nome).join(', ')}. Confira com o médico antes de dar.`} />
+      )}
       <Campo rotulo="Dose receitada" value={dose} onChangeText={setDose} placeholder="Ex.: 2,5 ml ou 8 gotas" />
       <Escolha
         rotulo="De quantas em quantas horas"

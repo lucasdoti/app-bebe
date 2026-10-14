@@ -2,10 +2,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { AvisoFicha } from '@/components/aviso-ficha';
 import { Aviso, Botao, Cabecalho, Campo, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
 import { useRegistros } from '@/context/registros';
+import { useSaude } from '@/context/saude';
 import { confirmar } from '@/lib/confirmar';
+import { itensNaLista } from '@/lib/saude';
 import { fase } from '@/lib/idade';
 import {
   observacaoDe,
@@ -83,6 +86,7 @@ function DiaHora({
 export default function RegistroForm() {
   const { id, tipo: tipoParam } = useLocalSearchParams<{ id: string; tipo?: Tipo }>();
   const { bebeAtual } = useBebes();
+  const saude = useSaude();
   const { doBebe, criar, atualizar, excluir } = useRegistros();
   const existente = id === 'novo' ? null : (doBebe.find((r) => r.id === id) ?? null);
   const tipo: Tipo = existente?.tipo ?? tipoParam ?? 'mamada';
@@ -145,7 +149,21 @@ export default function RegistroForm() {
     return (observacao.trim() ? { ...resto, observacao: observacao.trim().slice(0, 300) } : resto) as T;
   };
 
+  // Refeição com alimento da lista "a evitar" ou das alergias: avisa e pede confirmação.
+  const alimentoNaLista =
+    tipo === 'refeicao' ? [...itensNaLista(alimento, saude.alimentosEvitar), ...itensNaLista(alimento, saude.alergias)] : [];
+
   function salvar() {
+    if (alimentoNaLista.length)
+      return confirmar(
+        `Atenção: "${alimento.trim()}" parece estar na ficha de saúde (${alimentoNaLista.map((i) => i.nome).join(', ')}). Registrar mesmo assim?`,
+        'Registrar',
+        gravar,
+      );
+    gravar();
+  }
+
+  function gravar() {
     setErro(null);
     const inicio = combinar(Number(dia), hora);
     if (!inicio) return setErro('Horário no formato HH:MM, por exemplo 14:05.');
@@ -304,6 +322,9 @@ export default function RegistroForm() {
       {tipo === 'refeicao' && (
         <>
           <Campo rotulo="O que comeu" value={alimento} onChangeText={setAlimento} placeholder="Ex.: papinha de abóbora" />
+          {alimentoNaLista.length > 0 && (
+            <AvisoFicha texto={`Está na ficha de saúde: ${alimentoNaLista.map((i) => i.nome).join(', ')}.`} />
+          )}
           {recentes.length > 0 && (
             <Escolha
               rotulo="Recentes"

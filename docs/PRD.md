@@ -219,6 +219,17 @@ Carteirinha de vacinas com dois calendários, a pedido dos pais (antecipado da V
 - Cartão na home do bebê (próxima vacina ou pendências) e na home da gestação.
 - O calendário fica no app (`src/lib/vacinas.ts`) e precisa ser revisto quando o Ministério da Saúde atualizar a Instrução Normativa. O app sempre orienta conferir com a unidade de saúde.
 
+## Ficha de saúde
+
+Pedido de uma mãe cujo filho tem deficiência de G6PD e leva em toda consulta a lista de remédios que ele não pode tomar (2026-10-13).
+
+- **Não há um padrão único:** cada alteração do teste do pezinho pede um cuidado diferente (lista a evitar na G6PD, dieta na fenilcetonúria, remédio diário no hipotireoidismo, febre como urgência na doença falciforme...). Por isso a ficha é genérica.
+- **Teste do pezinho:** data da coleta e resultado (aguardando, normal, alterado), com o lembrete de que o primeiro resultado alterado costuma pedir reteste.
+- **Condições** com situação (em investigação, confirmado, descartado), **remédios e substâncias a evitar**, **alimentos a evitar**, **alergias** e **de onde veio a lista**.
+- **Sem listas prontas:** a família copia a lista entregue pelo médico ou pelo serviço de triagem (dá para colar vários itens de uma vez). As listas de G6PD que circulam divergem entre si (ex.: dipirona, paracetamol), e uma lista errada no app seria perigosa.
+- **Avisos:** ao cadastrar um remédio ou registrar uma refeição que bata com a lista (por palavra, nome comercial ou sigla), o app avisa e pede confirmação; faixa de alerta na home; seção "⚠️ Atenção" no topo do resumo para o pediatra. A comparação ajuda, mas não substitui conferir com o médico.
+- **Mostrar ao médico:** tela em letra grande e envio pelo WhatsApp. A ficha fica guardada no aparelho e abre sem internet.
+
 ## V2 e backlog
 
 A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.
@@ -281,6 +292,7 @@ Lembretes usam Web Push, disparado por uma Edge Function do Supabase agendada co
 | enxoval_gastos / enxoval_orcamento | id, bebe_id, tipo (compra, presente), descricao, valor, data, categoria, forma_pagamento, parcelas, quem_deu, agradecido / bebe_id, valor |
 | contatos_parto / plano_parto_itens | id, bebe_id, papel, nome, telefone, endereco / id, bebe_id, grupo, texto, preferencia |
 | cha_bebe / cha_reservas | bebe_id, token, ativo, data_evento, local, mensagem, pix / id, item_id, bebe_id, nome, quantidade, mensagem, codigo |
+| saude_itens | id, bebe_id, tipo (pezinho, condicao, evitar_remedio, evitar_alimento, alergia, fonte), nome, status, data, detalhe |
 | vacinas_aplicadas | id, bebe_id, para (bebe, mae), codigo, nome, data, local, lote, observacao |
 | nomes / nomes_votos | id, bebe_id, nome, sexo / nome_id, user_id, valor (2 amo, 1 gosto, −1 não) |
 

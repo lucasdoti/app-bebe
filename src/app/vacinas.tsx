@@ -160,6 +160,11 @@ export default function Vacinas() {
   return (
     <Tela>
       <Cabecalho titulo="Vacinas" />
+      <Botao
+        titulo="Ficha de saúde: teste do pezinho, o que evitar e alergias"
+        variante="secundario"
+        onPress={() => router.push('/saude')}
+      />
       <Escolha<Para>
         rotulo="Carteirinha de"
         opcoes={[

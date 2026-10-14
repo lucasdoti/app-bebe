@@ -9,11 +9,13 @@ import { useGestacao } from '@/context/gestacao';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
 import { useRemedios } from '@/context/remedios';
+import { useSaude } from '@/context/saude';
 import { useVacinas } from '@/context/vacinas';
 import { idadeEmDias, percentil, percentilTexto, pontosDe, type Indicador } from '@/lib/crescimento';
 import { idadeGestacional, idadeGestacionalNaData, pesoTexto, semanasTexto } from '@/lib/gestacao';
 import { deISO, hojeISO, idadeTexto } from '@/lib/idade';
 import { numeroBR, resumoDaSemana } from '@/lib/resumo';
+import { nomeStatus } from '@/lib/saude';
 import { lerPref, salvarPref } from '@/lib/storage';
 import { horaCurta } from '@/lib/tempo';
 import { CALENDARIO_BEBE, CALENDARIO_MAE, rotuloSituacao, situacaoBebe, situacaoMae } from '@/lib/vacinas';
@@ -91,6 +93,7 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
   const { doBebe: medidas } = useMedidas();
   const { situacao } = useRemedios();
   const { aplicadas } = useVacinas();
+  const saude = useSaude();
   const r = resumoDaSemana(doBebe, 7);
 
   const rotina = [
@@ -126,8 +129,16 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
 
   const secoes: Secao[] = [
     { titulo: 'Bebê', linhas: [`${idadeTexto(bebe.nascimento)} · nasceu em ${deISO(bebe.nascimento)} (${idadeEmDias(bebe.nascimento, hojeISO())} dias)`] },
-    { titulo: `Rotina (média dos últimos ${r.dias} dias)`, linhas: rotina },
   ];
+  // O que o médico precisa saber antes de receitar vem logo no começo.
+  const atencao = [
+    ...saude.condicoes.filter((c) => c.status !== 'descartado').map((c) => `Condição: ${c.nome}${c.status ? ` (${nomeStatus[c.status].toLowerCase()})` : ''}`),
+    ...(saude.remediosEvitar.length ? [`Remédios a evitar: ${saude.remediosEvitar.map((i) => i.nome).join(', ')}`] : []),
+    ...(saude.alimentosEvitar.length ? [`Alimentos a evitar: ${saude.alimentosEvitar.map((i) => i.nome).join(', ')}`] : []),
+    ...(saude.alergias.length ? [`Alergias: ${saude.alergias.map((i) => i.nome).join(', ')}`] : []),
+  ];
+  if (atencao.length) secoes.push({ titulo: '⚠️ Atenção', linhas: atencao });
+  secoes.push({ titulo: `Rotina (média dos últimos ${r.dias} dias)`, linhas: rotina });
   if (crescimento.length) secoes.push({ titulo: 'Crescimento', linhas: crescimento });
   if (remedios.length) secoes.push({ titulo: 'Remédios em uso', linhas: remedios });
   secoes.push({

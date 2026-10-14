@@ -25,6 +25,7 @@ import { duracaoSegundos } from '@/lib/registros';
 import { duracao, haQuanto, horaCurta } from '@/lib/tempo';
 import { fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
+import { AlertaSaude } from './alerta-saude';
 import { BotaoRegistro, CartaoResumo } from './home';
 import { Botao, Tela, Texto } from './ui';
 
@@ -117,6 +118,8 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
           Parto previsto: {deISO(parto)} · {faltamTexto(ig.faltam)}
         </Texto>
       </View>
+
+      <AlertaSaude />
 
       {ig.semanas >= 34 && chegouAHora}
 

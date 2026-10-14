@@ -16,6 +16,7 @@ import { EnxovalProvider } from '@/context/enxoval';
 import { GestacaoProvider } from '@/context/gestacao';
 import { MedidasProvider } from '@/context/medidas';
 import { PartoProvider } from '@/context/parto';
+import { SaudeProvider } from '@/context/saude';
 import { RegistrosProvider } from '@/context/registros';
 import { RemediosProvider } from '@/context/remedios';
 import { registrarServiceWorker } from '@/lib/notificacoes';
@@ -42,7 +43,9 @@ export default function RootLayout() {
                       <EnxovalProvider>
                         <VacinasProvider>
                           <PartoProvider>
-                            <Rotas />
+                            <SaudeProvider>
+                              <Rotas />
+                            </SaudeProvider>
                           </PartoProvider>
                         </VacinasProvider>
                       </EnxovalProvider>
@@ -102,6 +105,8 @@ function Rotas() {
           <Stack.Screen name="sono" />
           <Stack.Screen name="gastos" />
           <Stack.Screen name="gasto/[id]" />
+          <Stack.Screen name="saude/index" />
+          <Stack.Screen name="saude/medico" />
           <Stack.Screen name="cha/index" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>

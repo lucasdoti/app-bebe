@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { AlertaSaude } from '@/components/alerta-saude';
 import { Folha } from '@/components/folha';
 import { InicioGestacao } from '@/components/inicio-gestacao';
 import { BotaoRegistro, CartaoResumo, SeletorBebe, type NomeIcone } from '@/components/home';
@@ -458,6 +459,8 @@ export default function Inicio() {
           {reg.pendentes > 0 ? ` · ${reg.pendentes} registro(s) aguardando internet` : ''}
         </Texto>
       </View>
+
+      <AlertaSaude />
 
       {roupa.perguntas(bebeAtual.id).slice(0, 1).map((p) => (
         <PerguntaRoupa
