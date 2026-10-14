@@ -79,6 +79,10 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 
 - Iniciar e parar o sono com um toque, mais registro retroativo.
 - Total em 24h, número de cochilos e janela de vigília atual.
+- Relógio do sono (decidido em 2026-10-14): tela "Sono", aberta pelo cartão de sono da home. Um relógio de 24h com 00h no topo mostra o dia escolhido (hoje e os 7 anteriores): sonos em arcos lilás, mamadas e refeições em pontos rosa no anel de fora, o ponteiro do agora e a próxima soneca sugerida em lilás mais claro. No centro: dormindo há / próxima soneca em / acordado há. Embaixo: sono total, sonecas e tempo acordado do dia, e a lista de sonos e mamadas do dia (tocar abre a edição).
+- Noite x soneca: um sono cujo meio cai entre 19h e 6h conta como sono da noite. O sono que passa da meia-noite aparece cortado em cada dia.
+- Média dos últimos 7 dias completos, só dos dias com sono registrado: sono por dia, sono da noite, sonecas (quantidade e tempo), tempo acordado entre sonos (mediana), hora de dormir e de acordar (a partir de 3 noites).
+- Sugestão do próximo sono (antecipada do backlog em 2026-10-14): a partir do fim do último sono, soma a janela de vigília do próprio bebê (mediana dos últimos 7 dias, com pelo menos 5 janelas, ±15 min) ou, sem histórico, a referência da idade (0–1 mês 35–60 min; 1–3 meses 60–90 min; 3–5 meses 75–120 min; 5–7 meses 2–3 h; 7–10 meses 2h30–3h30; 10–14 meses 3–4 h; 14–24 meses 4–6 h; depois 5–6 h). Perto da hora de dormir de costume (ou depois das 19h, sem histórico) vira "sono da noite". Antes dos 3 meses o app só mostra a janela típica, sem horário. Sempre como sugestão, não regra.
 
 **RF5. Fraldas**
 
@@ -227,7 +231,8 @@ A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.
 | Fotos e álbum de marcos | V2 | Custo de armazenamento (Supabase Storage) |
 | Marcos do desenvolvimento (sorriu, sentou, andou) | V2 | Combina com o álbum |
 | Guarda-roupa do bebê (sugestão com as peças reais) | Backlog | Precisa de cadastro de peças |
-| Previsão da próxima mamada ou sono | Backlog | Exige histórico de algumas semanas |
+| Previsão do próximo sono | ~~Backlog~~ V1 | Antecipada em 2026-10-14: veja "Relógio do sono" no RF4 |
+| Previsão da próxima mamada | Backlog | Exige histórico de algumas semanas |
 | Exportar resumo em PDF | Backlog | Na V1 o resumo é só uma tela |
 | Explicação da roupa por LLM | Backlog | Opcional |
 | Outros cuidadores (avós, babá) | Backlog | O modelo de família já suporta |

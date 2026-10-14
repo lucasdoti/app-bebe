@@ -35,6 +35,7 @@ import {
   type Registro,
   type Tipo,
 } from '@/lib/registros';
+import { mediaSono, preverSono } from '@/lib/sono';
 import { lerPref } from '@/lib/storage';
 import { cronometro, duracao, haQuanto, horaCurta, HORA } from '@/lib/tempo';
 import { ALVO_TOQUE, fontes, type Paleta } from '@/theme/cores';
@@ -210,6 +211,14 @@ export default function Inicio() {
     );
   })();
 
+  // Próxima soneca ou sono da noite sugerido (o detalhe fica na tela do sono).
+  const proximoSono = (() => {
+    const p = preverSono(reg.doBebe, bebeAtual.nascimento, mediaSono(reg.doBebe, 7, agora), agora);
+    if (!p || p.tipo === 'janela') return null;
+    if (p.passou) return 'Pode estar com sono: passou da janela';
+    return `${p.tipo === 'noite' ? 'Sono da noite' : 'Próxima soneca'} por volta de ${horaCurta(new Date(p.previsto))}`;
+  })();
+
   const sono = r.dormindo ? (
     <CartaoResumo
       key="sono"
@@ -217,8 +226,8 @@ export default function Inicio() {
       icone="sleep"
       titulo={`Dormindo desde ${horaCurta(r.dormindo.inicio)}`}
       valor={cronometro(agora - new Date(r.dormindo.inicio).getTime())}
-      detalhe={`${duracao(r.sono24h)} de sono em 24h`}
-      onPress={() => abrirRegistro(r.dormindo!.id)}>
+      detalhe={`${duracao(r.sono24h)} de sono em 24h · ver o relógio`}
+      onPress={() => router.push('/sono')}>
       <View style={{ flex: 1 }}>
         <Botao titulo="Acordou" onPress={() => reg.encerrar(r.dormindo!)} />
       </View>
@@ -230,11 +239,15 @@ export default function Inicio() {
       icone="sleep"
       titulo={r.acordadoDesde ? 'Acordado (janela de vigília)' : f === 'crianca' ? 'Cochilos' : 'Sono'}
       valor={r.acordadoDesde ? haQuanto(r.acordadoDesde, new Date(agora)).replace('há ', '') : '—'}
-      detalhe={
+      detalhe={[
+        proximoSono,
         r.sono24h
           ? `${duracao(r.sono24h)} de sono em 24h · ${r.cochilos} ${r.cochilos === 1 ? 'sono' : 'sonos'}`
-          : 'Nenhum sono registrado nas últimas 24h'
-      }
+          : 'Nenhum sono registrado nas últimas 24h',
+      ]
+        .filter(Boolean)
+        .join('\n')}
+      onPress={() => router.push('/sono')}
     />
   );
 
