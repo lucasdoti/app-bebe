@@ -3,10 +3,10 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 
+import { useDesfazer } from '@/components/desfazer';
 import { Aviso, Botao, Cabecalho, Campo, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
 import { useSaude } from '@/context/saude';
-import { confirmar } from '@/lib/confirmar';
 import { deISO, hojeISO, mascaraData, paraISO } from '@/lib/idade';
 import { nomeStatus, separarLista, textoDaFicha, type ItemSaude, type StatusSaude, type TipoSaude } from '@/lib/saude';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
@@ -46,6 +46,7 @@ function Lista({
   itens,
   placeholder,
   executar,
+  remover,
   bebeId,
 }: {
   titulo: string;
@@ -54,6 +55,7 @@ function Lista({
   itens: ItemSaude[];
   placeholder: string;
   executar: Executar;
+  remover: (item: ItemSaude) => void;
   bebeId: string;
 }) {
   const [texto, setTexto] = useState('');
@@ -69,13 +71,7 @@ function Lista({
       <Texto variante="subtitulo">{titulo}</Texto>
       <Texto variante="suave">{explicacao}</Texto>
       {itens.map((i) => (
-        <LinhaItem
-          key={i.id}
-          item={i}
-          onRemover={() =>
-            confirmar(`Tirar "${i.nome}" da lista?`, 'Tirar', () => executar(supabase.from('saude_itens').delete().eq('id', i.id)))
-          }
-        />
+        <LinhaItem key={i.id} item={i} onRemover={() => remover(i)} />
       ))}
       <Campo
         rotulo="Adicionar (um por linha; pode colar a lista inteira)"
@@ -106,6 +102,7 @@ export default function FichaDeSaude() {
   const [statusCondicao, setStatusCondicao] = useState<StatusSaude>('confirmado');
   const [detalheCondicao, setDetalheCondicao] = useState('');
   const [fonte, setFonte] = useState(saude.fonte?.nome ?? '');
+  const { oferecer, barra } = useDesfazer();
 
   // Se a ficha chegar depois de a tela abrir (ou mudar no outro celular), atualiza os campos.
   useEffect(() => {
@@ -124,6 +121,14 @@ export default function FichaDeSaude() {
     await saude.recarregar();
     return !error;
   };
+
+  async function remover(i: ItemSaude) {
+    if (!(await executar(supabase.from('saude_itens').delete().eq('id', i.id)))) return;
+    const { id, bebe_id, tipo, nome, status, data, detalhe } = i;
+    oferecer(`"${nome}" saiu da ficha`, () =>
+      executar(supabase.from('saude_itens').insert({ id, bebe_id, tipo, nome, status, data, detalhe })),
+    );
+  }
 
   async function salvarPezinho() {
     const d = coleta.trim() ? paraISO(coleta) : null;
@@ -171,7 +176,7 @@ export default function FichaDeSaude() {
   const texto = textoDaFicha(bebeAtual.nome, saude.ficha);
 
   return (
-    <Tela>
+    <Tela rodape={barra}>
       <Cabecalho titulo="Ficha de saúde" />
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -242,13 +247,7 @@ export default function FichaDeSaude() {
         <Texto variante="subtitulo">Condições de saúde</Texto>
         {saude.condicoes.length === 0 && <Texto variante="suave">Nenhuma condição anotada.</Texto>}
         {saude.condicoes.map((c) => (
-          <LinhaItem
-            key={c.id}
-            item={c}
-            onRemover={() =>
-              confirmar(`Tirar "${c.nome}" da ficha?`, 'Tirar', () => executar(supabase.from('saude_itens').delete().eq('id', c.id)))
-            }
-          />
+          <LinhaItem key={c.id} item={c} onRemover={() => remover(c)} />
         ))}
         <Campo rotulo="Condição" value={novaCondicao} onChangeText={setNovaCondicao} placeholder="Ex.: Deficiência de G6PD" />
         <Escolha<StatusSaude>
@@ -277,6 +276,7 @@ export default function FichaDeSaude() {
         itens={saude.remediosEvitar}
         placeholder={'Ex.:\nDipirona (Novalgina)\nÁcido acetilsalicílico (AAS)'}
         executar={executar}
+        remover={remover}
         bebeId={bebeAtual.id}
       />
 
@@ -287,6 +287,7 @@ export default function FichaDeSaude() {
         itens={saude.alimentosEvitar}
         placeholder="Ex.: Feijão-fava"
         executar={executar}
+        remover={remover}
         bebeId={bebeAtual.id}
       />
 
@@ -297,6 +298,7 @@ export default function FichaDeSaude() {
         itens={saude.alergias}
         placeholder="Ex.: Amoxicilina – manchas na pele"
         executar={executar}
+        remover={remover}
         bebeId={bebeAtual.id}
       />
 

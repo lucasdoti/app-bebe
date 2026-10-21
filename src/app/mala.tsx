@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Aviso, Botao, Cabecalho, Campo, Cartao, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
 import { useGestacao, type GrupoMala, type ItemMala } from '@/context/gestacao';
+import { useDesfazer } from '@/components/desfazer';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
@@ -53,6 +54,7 @@ const LISTA_INICIAL: Record<GrupoMala, string[]> = {
 export default function Mala() {
   const { bebeAtual } = useBebes();
   const { mala, recarregar } = useGestacao();
+  const { oferecer, barra } = useDesfazer();
   const { cores } = useTema();
   const [novos, setNovos] = useState<Partial<Record<GrupoMala, string>>>({});
   const [erro, setErro] = useState<string | null>(null);
@@ -76,7 +78,12 @@ export default function Mala() {
 
   const alternar = (item: ItemMala) =>
     executar(supabase.from('mala_itens').update({ feito: !item.feito }).eq('id', item.id));
-  const remover = (item: ItemMala) => executar(supabase.from('mala_itens').delete().eq('id', item.id));
+  async function remover(item: ItemMala) {
+    await executar(supabase.from('mala_itens').delete().eq('id', item.id));
+    oferecer(`"${item.nome}" saiu da lista`, () =>
+      executar(supabase.from('mala_itens').insert({ id: item.id, bebe_id: item.bebe_id, grupo: item.grupo, nome: item.nome, feito: item.feito })),
+    );
+  }
   async function adicionar(grupo: GrupoMala) {
     const nome = novos[grupo]?.trim();
     if (!nome) return;
@@ -87,7 +94,7 @@ export default function Mala() {
   const prontos = mala.filter((m) => m.feito).length;
 
   return (
-    <Tela>
+    <Tela rodape={barra}>
       <Cabecalho titulo="Mala da maternidade" />
       {mala.length === 0 ? (
         <Cartao>

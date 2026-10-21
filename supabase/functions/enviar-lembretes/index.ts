@@ -163,7 +163,7 @@ async function lembretesDevidos(agora: Date) {
   // 4. Pré-natal: aviso com até 24 h de antecedência para consultas e exames.
   const { data: consultas } = await db
     .from('pre_natal')
-    .select('id, bebe_id, titulo, data, local')
+    .select('id, bebe_id, titulo, data, local, perguntas')
     .in('tipo', ['consulta', 'exame'])
     .eq('lembrete_enviado', false)
     .gt('data', agora.toISOString())
@@ -172,17 +172,112 @@ async function lembretesDevidos(agora: Date) {
     await db.from('pre_natal').update({ lembrete_enviado: true }).eq('id', c.id);
     const quando = new Date(c.data);
     const mesmoDia = diaBR.format(quando) === diaBR.format(agora);
+    // Lembra das perguntas anotadas para a consulta (a primeira aparece no aviso).
+    const perguntas = (c.perguntas ?? '')
+      .split('\n')
+      .map((l: string) => l.trim())
+      .filter(Boolean);
+    const corpoPerguntas = perguntas.length
+      ? `${perguntas.length === 1 ? '1 pergunta anotada' : `${perguntas.length} perguntas anotadas`}: “${perguntas[0].slice(0, 80)}”${perguntas.length > 1 ? '…' : ''}`
+      : null;
     avisos.push({
       bebeId: c.bebe_id,
       montar: () => ({
         titulo: `${mesmoDia ? 'Hoje' : 'Amanhã'} às ${hora(quando)}: ${c.titulo}`,
-        corpo: c.local ? `Local: ${c.local}` : 'Toque para ver as perguntas que vocês anotaram.',
+        corpo: [corpoPerguntas, c.local && `Local: ${c.local}`].filter(Boolean).join(' · ') || 'Toque para anotar perguntas para a consulta.',
         tag: `prenatal-${c.id}`,
         url: `/pre-natal/${c.id}`,
       }),
     });
   }
 
+  // 5. Vacinas: véspera e dia de cada dose do bebê; na gestação, quando a dTpa e a VSR ficam liberadas.
+  // Só a partir das 9h (horário de Brasília), uma vez por dose (tabela lembretes_enviados).
+  if (Number(horaBR.format(agora)) >= 9) avisos.push(...(await avisosDeVacina(agora)));
+
+  return avisos;
+}
+
+// Cópia compacta do calendário do app (src/lib/vacinas.ts — Calendário Nacional de Vacinação 2026).
+// Ao mudar o calendário do app, mude aqui também.
+const VACINAS_BEBE: [string, string, number][] = [
+  ['penta-1', 'Penta, 1ª dose', 2], ['vip-1', 'VIP (pólio), 1ª dose', 2], ['vpc20-1', 'Pneumocócica, 1ª dose', 2],
+  ['rota-1', 'Rotavírus, 1ª dose', 2], ['menc-1', 'Meningocócica C, 1ª dose', 3], ['penta-2', 'Penta, 2ª dose', 4],
+  ['vip-2', 'VIP (pólio), 2ª dose', 4], ['vpc10-2', 'Pneumocócica, 2ª dose', 4], ['rota-2', 'Rotavírus, 2ª dose', 4],
+  ['menc-2', 'Meningocócica C, 2ª dose', 5], ['penta-3', 'Penta, 3ª dose', 6], ['vip-3', 'VIP (pólio), 3ª dose', 6],
+  ['covid-1', 'Covid-19, 1ª dose', 6], ['influenza-1', 'Gripe, 1ª dose', 6], ['covid-2', 'Covid-19, 2ª dose', 7],
+  ['influenza-2', 'Gripe, 2ª dose', 7], ['covid-3', 'Covid-19, 3ª dose', 9], ['vfa-1', 'Febre amarela', 9],
+  ['vpc20-r', 'Pneumocócica, reforço', 12], ['acwy-r', 'Meningocócica ACWY', 12], ['scr-1', 'Tríplice viral, 1ª dose', 12],
+  ['dtp-r1', 'DTP, 1º reforço', 15], ['vip-r1', 'VIP, 1º reforço', 15], ['scr-2', 'Tríplice viral, 2ª dose', 15],
+  ['varicela-1', 'Varicela, 1ª dose', 15], ['hepa', 'Hepatite A', 15], ['dtp-r2', 'DTP, 2º reforço', 48],
+  ['vip-r2', 'VIP, 2º reforço', 48], ['vfa-r', 'Febre amarela, reforço', 48], ['varicela-2', 'Varicela, 2ª dose', 48],
+];
+const VACINAS_MAE: [string, string, number][] = [
+  ['dtpa-g', 'dTpa (protege o bebê da coqueluche)', 20],
+  ['vsr-g', 'VSR (protege o bebê da bronquiolite)', 28],
+];
+
+// hourCycle h23: meia-noite vira "00" (com hour12:false alguns ambientes escrevem "24").
+const horaBR = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hourCycle: 'h23' });
+const isoBR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }); // AAAA-MM-DD
+
+function somarMeses(iso: string, meses: number) {
+  const [a, m, d] = iso.split('-').map(Number);
+  const r = new Date(Date.UTC(a, m - 1 + meses, d));
+  return r.toISOString().slice(0, 10);
+}
+const somarDias = (iso: string, dias: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + dias * 24 * HORA).toISOString().slice(0, 10);
+
+async function jaEnviado(chave: string) {
+  const { error } = await db.from('lembretes_enviados').insert({ chave });
+  // Chave repetida = esse aviso já saiu antes.
+  return !!error;
+}
+
+async function avisosDeVacina(agora: Date) {
+  const avisos: { bebeId: string; montar: (nome: string) => Aviso }[] = [];
+  const hoje = isoBR.format(agora);
+  const amanha = somarDias(hoje, 1);
+  const { data: bebes } = await db.from('bebes').select('id, status, nascimento, parto_previsto');
+  const { data: aplicadas } = await db.from('vacinas_aplicadas').select('bebe_id, para, codigo').not('codigo', 'is', null);
+  const tomou = (bebe: string, para: string, codigo: string) =>
+    (aplicadas ?? []).some((v) => v.bebe_id === bebe && v.para === para && v.codigo === codigo);
+
+  for (const b of bebes ?? []) {
+    if (b.status === 'nascido' && b.nascimento) {
+      for (const [codigo, nome, meses] of VACINAS_BEBE) {
+        const data = somarMeses(b.nascimento, meses);
+        if ((data !== hoje && data !== amanha) || tomou(b.id, 'bebe', codigo)) continue;
+        if (await jaEnviado(`vacina:${b.id}:${codigo}:${data === hoje ? 'dia' : 'vespera'}`)) continue;
+        avisos.push({
+          bebeId: b.id,
+          montar: (n) => ({
+            titulo: `${data === hoje ? 'Hoje' : 'Amanhã'}: vacina de ${n}`,
+            corpo: `${nome}. Leve a caderneta de vacinação.`,
+            tag: `vacina-${b.id}-${codigo}`,
+            url: '/vacinas',
+          }),
+        });
+      }
+    }
+    if (b.status === 'gestacao' && b.parto_previsto) {
+      // Idade gestacional: 280 dias até o parto previsto.
+      const totalDias = 280 - Math.round((Date.parse(`${b.parto_previsto}T00:00:00Z`) - Date.parse(`${hoje}T00:00:00Z`)) / (24 * HORA));
+      for (const [codigo, nome, semana] of VACINAS_MAE) {
+        if (totalDias < semana * 7 || tomou(b.id, 'mae', codigo)) continue;
+        if (await jaEnviado(`vacina:${b.id}:${codigo}:liberada`)) continue;
+        avisos.push({
+          bebeId: b.id,
+          montar: () => ({
+            titulo: `Vacina da gestação liberada: ${nome.split(' (')[0]}`,
+            corpo: `A partir da ${semana}ª semana: ${nome}. Converse com a obstetra e marque no app quando tomar.`,
+            tag: `vacina-${b.id}-${codigo}`,
+            url: '/vacinas?para=mae',
+          }),
+        });
+      }
+    }
+  }
   return avisos;
 }
 

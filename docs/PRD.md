@@ -56,6 +56,8 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 **RF1. Conta e família**
 
 - Login com Google ou e-mail.
+- "Esqueci minha senha" (2026-10-20): o Supabase manda um link por e-mail; ao abrir, o app pede a senha nova (tela `/nova-senha`).
+- Apagar itens de listas (mala, enxoval, ficha de saúde) não pede confirmação: o item sai na hora e uma barra "Desfazer" fica 7 segundos na tela. Itens do enxoval com reserva do chá ainda pedem confirmação, porque a reserva seria perdida.
 - Quem cria a conta cria a família e cadastra o(s) bebê(s): nome, data de nascimento, sexo (para a curva da OMS) e peso e altura ao nascer.
 - Código de convite (ex.: BEBE-7K2X9P, 6 caracteres para não dar para adivinhar) ou link (`/convite/BEBE-7K2X9P`) para o outro responsável entrar na família.
 - Na V1 cada pessoa participa de uma família só; quem sai da família pode entrar em outra com um código.
@@ -123,7 +125,8 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Lembretes personalizados: consulta, banho de sol, troca de fralda noturna.
 - A notificação vai para pai e mãe; quando um registra, o lembrete some para os dois.
 - Entrega por Web Push. No iPhone, só com o app instalado na tela inicial e iOS 16.4+.
-- Na gestação, aviso automático até 24 h antes de cada consulta ou exame do pré-natal.
+- Na gestação, aviso automático até 24 h antes de cada consulta ou exame do pré-natal, com as perguntas anotadas para a consulta.
+- Vacinas (2026-10-20): aviso na véspera e no dia de cada dose do bebê ainda não tomada, e, na gestação, quando chega a semana da dTpa (20ª) e da VSR (28ª). Os avisos de vacina saem a partir das 9h e não se repetem (tabela `lembretes_enviados`).
 - Como funciona (V1): uma Edge Function (`enviar-lembretes`) roda a cada minuto pelo pg_cron. A dose registrada antes da hora cancela o aviso para os dois; um aviso que já apareceu some do celular de quem registrou, mas no outro celular fica até ser tocado (o Web Push não permite apagar sem mostrar outra notificação).
 - Lembrete de mamada: um aviso por mamada, ao passar o intervalo escolhido (2h a 4h); não avisa durante uma mamada em andamento.
 - Remédio: tocar em "Dei a dose" antes da hora liberada pede confirmação, para evitar dose dobrada.
@@ -237,7 +240,7 @@ A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.
 | Item | Versão | Observação |
 | --- | --- | --- |
 | Vacinas com calendário do SUS | ~~V2~~ V1 | Antecipado em 2026-10-10: veja "Vacinas" |
-| Lembrete de vacina por notificação | Backlog | O calendário já calcula as datas |
+| Lembrete de vacina por notificação | ~~Backlog~~ Feito | 2026-10-20: veja RF10 |
 | Chá de bebê: lista de presentes com reserva | ~~Backlog~~ Feito | Ver "Chá de bebê" na seção Gestação |
 | Fotos e álbum de marcos | V2 | Custo de armazenamento (Supabase Storage) |
 | Marcos do desenvolvimento (sorriu, sentou, andou) | V2 | Combina com o álbum |

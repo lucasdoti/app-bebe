@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, Pressable, Share, Text, View } from 'react-native';
 
+import { useDesfazer } from '@/components/desfazer';
 import { Folha } from '@/components/folha';
 import { Aviso, Botao, Cabecalho, Campo, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
@@ -111,6 +112,7 @@ export default function Enxoval() {
   const [qtdConseguida, setQtdConseguida] = useState(1);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const { oferecer, barra } = useDesfazer();
 
   if (!bebeAtual) return null;
   const falta = aba === 'falta';
@@ -170,9 +172,24 @@ export default function Enxoval() {
   function mudar(item: ItemEnxoval, delta: number) {
     const nova = item.quantidade + delta;
     if (nova <= 0) {
-      confirmar(`Tirar ${nomeCompleto(item)} da lista?`, 'Tirar', () =>
-        executar(supabase.from('enxoval_itens').delete().eq('id', item.id)),
-      );
+      // Item reservado no chá: apagar também apaga as reservas, então ainda pede confirmação.
+      if (reservasDo(item).length) {
+        confirmar(`Tirar ${nomeCompleto(item)} da lista? As reservas do chá para ele também somem.`, 'Tirar', () =>
+          executar(supabase.from('enxoval_itens').delete().eq('id', item.id)),
+        );
+        return;
+      }
+      executar(supabase.from('enxoval_itens').delete().eq('id', item.id)).then((ok) => {
+        if (!ok) return;
+        const { id, bebe_id, categoria, nome, tamanho, quantidade, falta, prioridade, no_cha, link } = item;
+        oferecer(`${nomeCompleto(item)} saiu da lista`, () =>
+          executar(
+            supabase
+              .from('enxoval_itens')
+              .insert({ id, bebe_id, categoria, nome, tamanho, quantidade, falta, prioridade, no_cha, link }),
+          ),
+        );
+      });
       return;
     }
     executar(supabase.from('enxoval_itens').update({ quantidade: nova }).eq('id', item.id));
@@ -244,7 +261,7 @@ export default function Enxoval() {
   const sugestoes = CATEGORIAS.find((c) => c.valor === categoria)!.sugestoes;
 
   return (
-    <Tela>
+    <Tela rodape={barra}>
       <Cabecalho titulo={`Enxoval de ${bebeAtual.nome}`} />
 
       <Escolha<Aba>

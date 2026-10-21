@@ -11,6 +11,9 @@ type ValorSessao = {
   membros: Membro[];
   recarregarFamilia: () => Promise<void>;
   sair: () => Promise<void>;
+  /** Entrou pelo link de recuperação de senha e ainda não definiu a nova. */
+  trocandoSenha: boolean;
+  senhaTrocada: () => void;
 };
 
 const SessaoContext = createContext<ValorSessao | null>(null);
@@ -20,6 +23,7 @@ const chaveCache = (userId: string) => `familia:${userId}`;
 export function SessaoProvider({ children }: { children: ReactNode }) {
   const [sessao, setSessao] = useState<Session | null>(null);
   const [sessaoPronta, setSessaoPronta] = useState(false);
+  const [trocandoSenha, setTrocandoSenha] = useState(false);
   const [familia, setFamilia] = useState<Familia | null>(null);
   const [membros, setMembros] = useState<Membro[]>([]);
   // Para qual usuário a família já foi carregada (evita piscar a tela errada ao trocar de conta).
@@ -32,9 +36,11 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
       setSessao(data.session);
       setSessaoPronta(true);
     });
-    const { data } = supabase.auth.onAuthStateChange((_evento, nova) => {
+    const { data } = supabase.auth.onAuthStateChange((evento, nova) => {
       setSessao(nova);
       setSessaoPronta(true);
+      // Chegou pelo link de "esqueci minha senha": antes de tudo, pede a senha nova.
+      if (evento === 'PASSWORD_RECOVERY') setTrocandoSenha(true);
     });
     return () => data.subscription.unsubscribe();
   }, []);
@@ -112,7 +118,17 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
   const carregando = !sessaoPronta || (!!userId && carregadaPara !== userId);
 
   return (
-    <SessaoContext.Provider value={{ carregando, sessao, familia, membros, recarregarFamilia, sair }}>
+    <SessaoContext.Provider
+      value={{
+        carregando,
+        sessao,
+        familia,
+        membros,
+        recarregarFamilia,
+        sair,
+        trocandoSenha,
+        senhaTrocada: () => setTrocandoSenha(false),
+      }}>
       {children}
     </SessaoContext.Provider>
   );

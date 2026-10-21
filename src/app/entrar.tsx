@@ -56,6 +56,18 @@ export default function Entrar() {
     }
   }
 
+  // Manda o e-mail com o link; ao voltar pelo link, o app pede a senha nova (tela /nova-senha).
+  async function esqueci() {
+    setErro(null);
+    setInfo(null);
+    if (!email.trim()) return setErro('Escreva seu e-mail acima e toque de novo em "Esqueci minha senha".');
+    setCarregando(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: urlDeVolta() });
+    setCarregando(false);
+    if (error) return setErro(mensagemDeErro(error));
+    setInfo('Se esse e-mail tiver conta, chega em instantes um link para criar uma senha nova. Confira também o spam.');
+  }
+
   async function entrarComGoogle() {
     setErro(null);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -126,6 +138,7 @@ export default function Entrar() {
       <Aviso texto={info} tipo="info" />
 
       <Botao titulo={modo === 'entrar' ? 'Entrar' : 'Criar conta'} onPress={enviar} carregando={carregando} />
+      {modo === 'entrar' && <Botao titulo="Esqueci minha senha" variante="texto" onPress={esqueci} />}
       <Botao
         titulo={modo === 'entrar' ? 'Não tenho conta' : 'Já tenho conta'}
         variante="texto"

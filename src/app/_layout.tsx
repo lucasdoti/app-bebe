@@ -5,7 +5,7 @@ import {
   Nunito_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/nunito';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -63,13 +63,18 @@ export default function RootLayout() {
 
 function Rotas() {
   const [fontesProntas] = useFonts({ Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold });
-  const { carregando, sessao, familia } = useSessao();
+  const { carregando, sessao, familia, trocandoSenha } = useSessao();
   const { cores, noite } = useTema();
   const pronto = fontesProntas && !carregando;
 
   useEffect(() => {
     if (pronto) SplashScreen.hide();
   }, [pronto]);
+
+  // Veio pelo link de "esqueci minha senha": vai direto escolher a senha nova.
+  useEffect(() => {
+    if (pronto && trocandoSenha) router.replace('/nova-senha');
+  }, [pronto, trocandoSenha]);
 
   if (!pronto) return null;
 
@@ -118,6 +123,8 @@ function Rotas() {
         <Stack.Screen name="convite/[codigo]" />
         {/* Página do convidado do chá de bebê: aberta a quem tiver o link, sem login. */}
         <Stack.Screen name="cha/[token]" />
+        {/* Senha nova depois do link de recuperação (a pessoa já chega logada). */}
+        <Stack.Screen name="nova-senha" />
       </Stack>
     </>
   );
