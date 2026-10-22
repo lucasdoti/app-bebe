@@ -76,7 +76,7 @@ export default function ChegouAHora() {
 
       <BotoesDaHora />
 
-      <View style={{ backgroundColor: cores.fralda, borderRadius: 16, padding: 14, gap: 6 }}>
+      <View style={{ backgroundColor: cores.aviso, borderWidth: 1, borderColor: cores.fralda, borderRadius: 16, padding: 14, gap: 6 }}>
         <Texto style={{ fontFamily: fontes.extra, color: cores.textoNaPrimaria }}>Quando ir para a maternidade</Texto>
         {[
           'Contrações regulares a cada 5 minutos, de cerca de 1 minuto, por 1 hora (ou como a obstetra orientou)',

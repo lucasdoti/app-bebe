@@ -258,7 +258,7 @@ export default function ChaPublicoPagina() {
                 accessibilityRole="link"
                 accessibilityLabel={`Ver o produto em ${siteDoLink(i.link)}`}
                 onPress={() => Linking.openURL(i.link!)}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, opacity: pressed ? 0.7 : 1 })}>
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: ALVO_TOQUE, opacity: pressed ? 0.7 : 1 })}>
                 <MaterialCommunityIcons name="open-in-new" size={18} color={cores.texto} />
                 <Text style={{ fontFamily: fontes.negrito, fontSize: 15, color: cores.texto, textDecorationLine: 'underline' }}>
                   Ver o produto que os pais escolheram · {siteDoLink(i.link)}

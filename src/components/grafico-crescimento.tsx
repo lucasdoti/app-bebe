@@ -120,7 +120,7 @@ export function GraficoCrescimento({
             <G key={`${p.data}${i}`} onPress={() => setSelecionado(i === selecionado ? null : i)}>
               <Circle cx={x(p.dias)} cy={y(p.valor)} r={i === selecionado ? 7 : 5} fill={cores.medidasForte} stroke={cores.cartao} strokeWidth={2} />
               {/* Área de toque maior que o ponto. */}
-              <Rect x={x(p.dias) - 18} y={y(p.valor) - 18} width={36} height={36} fill="transparent" />
+              <Rect x={x(p.dias) - 24} y={y(p.valor) - 24} width={48} height={48} fill="transparent" />
             </G>
           ))}
         </Svg>

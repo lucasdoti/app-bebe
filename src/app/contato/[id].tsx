@@ -7,7 +7,7 @@ import { useBebes } from '@/context/bebes';
 import { nomePapel, useParto, type Papel } from '@/context/parto';
 import { confirmar } from '@/lib/confirmar';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
-import { fontes } from '@/theme/cores';
+import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
 const PAPEIS = Object.keys(nomePapel) as Papel[];
@@ -87,7 +87,7 @@ export default function ContatoForm() {
               accessibilityState={{ selected: ativo }}
               onPress={() => setPapel(p)}
               style={{
-                minHeight: 48,
+                minHeight: ALVO_TOQUE,
                 paddingHorizontal: 16,
                 borderRadius: 999,
                 borderWidth: 1.5,

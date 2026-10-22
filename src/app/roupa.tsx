@@ -203,14 +203,14 @@ export default function Roupa() {
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1 }}>
           <Botao
-            titulo={clima ? 'Atualizar' : 'Usar localização'}
+            titulo={clima ? 'Atualizar' : 'Localização'}
             variante="secundario"
             carregando={carregando}
             onPress={clima && local ? atualizar : usarLocalizacao}
           />
         </View>
         <View style={{ flex: 1 }}>
-          <Botao titulo="Escolher cidade" variante="secundario" onPress={() => setMostrarBusca(!mostrarBusca)} />
+          <Botao titulo="Outra cidade" variante="secundario" onPress={() => setMostrarBusca(!mostrarBusca)} />
         </View>
       </View>
       {clima && local?.nome && (
@@ -299,7 +299,7 @@ export default function Roupa() {
           {sugestao.avisos.map((a) => (
             <View
               key={a}
-              style={{ flexDirection: 'row', gap: 8, backgroundColor: cores.fralda, borderRadius: 14, padding: 12 }}>
+              style={{ flexDirection: 'row', gap: 8, backgroundColor: cores.aviso, borderWidth: 1, borderColor: cores.fralda, borderRadius: 14, padding: 12 }}>
               <MaterialCommunityIcons name="alert-circle-outline" size={20} color={cores.textoNaPrimaria} />
               <Text style={{ flex: 1, fontFamily: fontes.media, fontSize: 15, color: cores.textoNaPrimaria }}>{a}</Text>
             </View>

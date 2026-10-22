@@ -3,10 +3,9 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import type { Bebe } from '@/context/bebes';
-import { useEnxoval } from '@/context/enxoval';
 import { useVacinas } from '@/context/vacinas';
 import { CALENDARIO_MAE, situacaoMae } from '@/lib/vacinas';
-import { pontos, useGestacao } from '@/context/gestacao';
+import { useGestacao } from '@/context/gestacao';
 import { useParto } from '@/context/parto';
 import { useRegistros } from '@/context/registros';
 import { useAgora } from '@/hooks/use-agora';
@@ -19,7 +18,6 @@ import {
   tamanhoNaSemana,
   trimestre,
 } from '@/lib/gestacao';
-import { reais } from '@/lib/dinheiro';
 import { deISO, hojeISO } from '@/lib/idade';
 import { duracaoSegundos } from '@/lib/registros';
 import { duracao, haQuanto, horaCurta } from '@/lib/tempo';
@@ -42,16 +40,11 @@ const novoPreNatal = (tipo: string) => router.push({ pathname: '/pre-natal/[id]'
 // Tela inicial enquanto o bebê está a caminho.
 export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) {
   const { cores } = useTema();
-  const { preNatal, mala, nomes } = useGestacao();
+  const { preNatal } = useGestacao();
   const { doBebe } = useRegistros();
-  const { itens: enxoval, faltam, gastos, cha, reservas } = useEnxoval();
-  const qtdFaltam = faltam.reduce((s, i) => s + i.quantidade, 0);
-  const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
   const { aplicadas } = useVacinas();
   const { contatos, plano } = useParto();
   const agora = useAgora(30_000);
-  const pecas = enxoval.reduce((s, i) => s + i.quantidade, 0);
-  const roupas = enxoval.filter((i) => i.categoria === 'roupa').reduce((s, i) => s + i.quantidade, 0);
 
   const parto = bebe.parto_previsto!;
   const ig = idadeGestacional(parto, hojeISO());
@@ -64,11 +57,9 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
   const contracoes = doBebe.filter((r) => r.tipo === 'contracao');
   const contracaoAtiva = contracoes.find((r) => r.fim === null);
   const mostrarContracoes = ig.semanas >= 28 || contracoes.length > 0;
-  const prontos = mala.filter((m) => m.feito).length;
   const movimentos = doBebe.filter((r) => r.tipo === 'movimentos');
   const mostrarMovimentos = ig.semanas >= 28 || movimentos.length > 0;
   const ultimaContagem = movimentos[0];
-  const favorito = nomes.find((n) => pontos(n) > 0);
 
   // A partir da 34ª semana o cartão sobe para o topo da tela.
   const temObstetra = contatos.some((c) => c.papel === 'obstetra');
@@ -202,83 +193,24 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
         />
       )}
 
-      <CartaoResumo
-        cor={cores.mamada}
-        icone="format-list-text"
-        titulo="Nomes"
-        valor={favorito ? favorito.nome : nomes.length ? `${nomes.length} na lista` : 'Começar a lista'}
-        detalhe={favorito ? `Favorito por enquanto · ${nomes.length} na lista` : 'Cada um sugere e vota'}
-        onPress={() => router.push('/nomes')}
-      />
-
       {(() => {
+        // Vacina liberada e ainda não tomada aparece aqui; o resto fica na aba Preparar.
         const tomadas = (c: string) => aplicadas.some((a) => a.para === 'mae' && a.codigo === c);
         const pode = CALENDARIO_MAE.filter((d) => situacaoMae(d, ig.semanas, tomadas(d.codigo)) === 'agora');
-        const proxima = CALENDARIO_MAE.find((d) => situacaoMae(d, ig.semanas, tomadas(d.codigo)) === 'futura');
-        const feitas = CALENDARIO_MAE.filter((d) => tomadas(d.codigo)).length;
+        if (!pode.length) return null;
         return (
           <CartaoResumo
             cor={cores.medidas}
             icone="needle"
             titulo="Vacinas da gestação"
-            valor={pode.length ? `${pode.length} para tomar agora` : proxima ? `Próxima: ${proxima.vacina.split(' (')[0]}` : 'Em dia'}
-            detalhe={
-              pode.length
-                ? pode.map((d) => d.vacina.split(' (')[0]).join(', ')
-                : proxima
-                  ? `A partir da ${proxima.semanaMin}ª semana · ${feitas} tomadas`
-                  : `${feitas} tomadas`
-            }
+            valor={`${pode.length} para tomar agora`}
+            detalhe={pode.map((d) => d.vacina.split(' (')[0]).join(', ')}
             onPress={() => router.push({ pathname: '/vacinas', params: { para: 'mae' } })}
           />
         );
       })()}
 
-      <CartaoResumo
-        cor={cores.clima}
-        icone="hanger"
-        titulo="Enxoval"
-        valor={pecas ? `${pecas} ${pecas === 1 ? 'item' : 'itens'}` : 'Começar a lista'}
-        detalhe={
-          pecas
-            ? `${roupas} ${roupas === 1 ? 'roupa' : 'roupas'}${qtdFaltam ? ` · faltam ${qtdFaltam}` : ''}${gastoTotal ? ` · ${reais(gastoTotal)} gastos` : ''}`
-            : qtdFaltam
-              ? `Faltam ${qtdFaltam} itens`
-              : 'O que vocês já têm e o que falta'
-        }
-        onPress={() => router.push('/enxoval')}
-      />
-
-      <CartaoResumo
-        cor={cores.mamada}
-        icone="gift-outline"
-        titulo="Chá de bebê"
-        valor={cha ? `${reservas.reduce((s, r) => s + r.quantidade, 0)} presentes reservados` : 'Lista de presentes'}
-        detalhe={
-          cha
-            ? cha.data_evento
-              ? `Dia ${new Date(cha.data_evento).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · ${cha.ativo ? 'link ativo' : 'link pausado'}`
-              : cha.ativo
-                ? 'Link ativo'
-                : 'Link pausado'
-            : 'Convidados reservam o presente por um link, sem repetir'
-        }
-        onPress={() => router.push('/cha')}
-      />
-
-      <CartaoResumo
-        cor={cores.fralda}
-        icone="bag-suitcase-outline"
-        titulo="Mala da maternidade"
-        valor={mala.length ? `${prontos} de ${mala.length} prontos` : 'Começar a lista'}
-        detalhe={ig.semanas >= 32 ? 'A partir da 32ª semana, vale deixar a mala pronta.' : 'Lista compartilhada entre vocês'}
-        onPress={() => router.push('/mala')}
-      />
-
       {ig.semanas < 34 && chegouAHora}
-
-      <Botao titulo="Resumo para a consulta" variante="secundario" onPress={() => router.push('/resumo')} />
-      <Botao titulo="Lembretes das consultas" variante="secundario" onPress={() => router.push('/lembretes')} />
 
       <Botao
         titulo={`${bebe.nome} nasceu!`}

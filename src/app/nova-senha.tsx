@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 
+import { INICIO } from '@/lib/app';
 import { Aviso, Botao, Campo, Tela, Texto } from '@/components/ui';
 import { useSessao } from '@/context/sessao';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
@@ -22,7 +23,7 @@ export default function NovaSenha() {
     setCarregando(false);
     if (error) return setErro(mensagemDeErro(error));
     senhaTrocada();
-    router.replace('/');
+    router.replace(INICIO);
   }
 
   if (!sessao) {

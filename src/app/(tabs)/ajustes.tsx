@@ -50,7 +50,7 @@ export default function Ajustes() {
 
   return (
     <Tela>
-      <Cabecalho titulo="Ajustes" />
+      <Cabecalho titulo="Família" semVoltar />
 
       <Cartao>
         <Texto variante="subtitulo">Bebês</Texto>
@@ -124,12 +124,6 @@ export default function Ajustes() {
       <Texto variante="suave">No automático, o modo noite liga das 20h às 6h.</Texto>
 
       <Botao titulo="Lembretes e notificações" variante="secundario" onPress={() => router.push('/lembretes')} />
-      <Botao titulo="Remédios e febre" variante="secundario" onPress={() => router.push('/remedios')} />
-      <Botao titulo="Enxoval" variante="secundario" onPress={() => router.push('/enxoval')} />
-      <Botao titulo="Chá de bebê" variante="secundario" onPress={() => router.push('/cha')} />
-      <Botao titulo="Vacinas" variante="secundario" onPress={() => router.push('/vacinas')} />
-      <Botao titulo="Ficha de saúde" variante="secundario" onPress={() => router.push('/saude')} />
-      <Botao titulo="Resumo para a consulta" variante="secundario" onPress={() => router.push('/resumo')} />
 
       <Botao titulo="Sair da família" variante="texto" onPress={sairDaFamilia} />
       <Botao titulo="Sair da conta" variante="texto" onPress={sair} />

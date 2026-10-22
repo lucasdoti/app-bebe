@@ -4,13 +4,14 @@ import { Pressable, View } from 'react-native';
 
 import { GraficoLinha } from '@/components/grafico-linha';
 import { GraficoUltrassom } from '@/components/grafico-ultrassom';
+import { BotaoRegistro } from '@/components/home';
 import { dataHoraCurta } from '@/components/inicio-gestacao';
 import { Botao, Cabecalho, Cartao, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
 import { useGestacao, type PreNatal, type TipoPreNatal } from '@/context/gestacao';
 import { idadeGestacionalNaData, pesoTexto } from '@/lib/gestacao';
 import { deISO, hojeISO } from '@/lib/idade';
-import { ALVO_TOQUE, fontes } from '@/theme/cores';
+import { ALVO_TOQUE, fontes, type Paleta } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
 const icones: Record<TipoPreNatal, 'stethoscope' | 'clipboard-text-outline' | 'heart-pulse'> = {
@@ -22,9 +23,12 @@ const icones: Record<TipoPreNatal, 'stethoscope' | 'clipboard-text-outline' | 'h
 const abrir = (id: string, tipo?: TipoPreNatal) =>
   router.push({ pathname: '/pre-natal/[id]', params: tipo ? { id, tipo } : { id } });
 
+const corDoTipo = (t: TipoPreNatal, cores: Paleta) =>
+  t === 'ultrassom' ? cores.sono : t === 'exame' ? cores.fralda : cores.clima;
+
 function Item({ p, parto }: { p: PreNatal; parto: string | null }) {
   const { cores } = useTema();
-  const cor = p.tipo === 'ultrassom' ? cores.sono : p.tipo === 'exame' ? cores.fralda : cores.clima;
+  const cor = corDoTipo(p.tipo, cores);
   const ig = parto ? idadeGestacionalNaData(parto, hojeISO(new Date(p.data))) : null;
   const detalhes = [
     ig && ig.totalDias >= 0 && `${ig.semanas} sem e ${ig.dias} d`,
@@ -59,6 +63,7 @@ function Item({ p, parto }: { p: PreNatal; parto: string | null }) {
 export default function PreNatalLista() {
   const { bebeAtual } = useBebes();
   const { preNatal } = useGestacao();
+  const { cores } = useTema();
   if (!bebeAtual) return null;
 
   const agora = Date.now() - 60 * 60_000;
@@ -68,18 +73,17 @@ export default function PreNatalLista() {
 
   return (
     <Tela>
-      <Cabecalho titulo="Pré-natal" />
-      <Botao titulo="Resumo para a consulta" onPress={() => router.push('/resumo')} />
+      <Cabecalho titulo="Pré-natal" semVoltar />
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {(['consulta', 'exame', 'ultrassom'] as TipoPreNatal[]).map((t) => (
-          <View key={t} style={{ flex: 1 }}>
-            <Botao
-              titulo={{ consulta: '+ Consulta', exame: '+ Exame', ultrassom: '+ Ultrassom' }[t]}
-              variante="secundario"
-              onPress={() => abrir('novo', t)}
-            />
-          </View>
+          <BotaoRegistro
+            key={t}
+            cor={corDoTipo(t, cores)}
+            icone={icones[t]}
+            titulo={{ consulta: 'Consulta', exame: 'Exame', ultrassom: 'Ultrassom' }[t]}
+            onPress={() => abrir('novo', t)}
+          />
         ))}
       </View>
 
@@ -107,6 +111,9 @@ export default function PreNatalLista() {
           <Item key={p.id} p={p} parto={bebeAtual.parto_previsto} />
         ))}
       </Cartao>
+
+      <Botao titulo="Resumo para a consulta" variante="secundario" onPress={() => router.push('/resumo')} />
+      <Botao titulo="Lembretes das consultas" variante="secundario" onPress={() => router.push('/lembretes')} />
     </Tela>
   );
 }
@@ -163,7 +170,7 @@ function SaudeDaMae({ consultas, parto }: { consultas: PreNatal[]; parto: string
         </Texto>
       )}
       {alta && (
-        <View style={{ backgroundColor: cores.fralda, borderRadius: 14, padding: 12 }}>
+        <View style={{ backgroundColor: cores.aviso, borderWidth: 1, borderColor: cores.fralda, borderRadius: 14, padding: 12 }}>
           <Texto style={{ color: cores.textoNaPrimaria }}>
             Alguma medida chegou a 14 por 9 ou mais. Na gestação isso merece atenção: confira com a obstetra.
           </Texto>

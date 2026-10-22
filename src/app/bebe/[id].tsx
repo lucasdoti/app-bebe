@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
+import { INICIO } from '@/lib/app';
 import { Aviso, Botao, Cabecalho, Campo, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes, type Bebe, type Sexo } from '@/context/bebes';
 import { useSessao } from '@/context/sessao';
@@ -124,7 +125,7 @@ export default function BebeForm() {
     await recarregar();
     escolherBebe(resposta.data.id);
     if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else router.replace(INICIO);
   }
 
   function remover() {
@@ -133,7 +134,7 @@ export default function BebeForm() {
       const { error } = await supabase.from('bebes').delete().eq('id', existente.id);
       if (error) return setErro(mensagemDeErro(error));
       await recarregar();
-      router.replace('/');
+      router.replace(INICIO);
     });
   }
 

@@ -9,7 +9,7 @@ import { confirmar } from '@/lib/confirmar';
 import { mascaraDinheiro, nomeForma, paraNumero, paraTextoDinheiro, reais, type FormaPagamento } from '@/lib/dinheiro';
 import { deISO, hojeISO, mascaraData, paraISO } from '@/lib/idade';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
-import { fontes } from '@/theme/cores';
+import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
 const PARCELAS = [1, 2, 3, 4, 5, 6, 10, 12];
@@ -35,7 +35,7 @@ function Chips<T extends string | number>({
             accessibilityState={{ selected: ativo }}
             onPress={() => onChange(ativo ? null : o.valor)}
             style={{
-              minHeight: 48,
+              minHeight: ALVO_TOQUE,
               paddingHorizontal: 16,
               borderRadius: 999,
               borderWidth: 1.5,

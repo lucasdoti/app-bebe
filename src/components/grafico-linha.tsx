@@ -82,7 +82,7 @@ export function GraficoLinha({
           {pontos.map((p, i) => (
             <G key={i} onPress={() => setSel(i === sel ? null : i)}>
               <Circle cx={x(p.x)} cy={y(p.y)} r={i === sel ? 7 : 5} fill={cores.medidasForte} stroke={cores.cartao} strokeWidth={2} />
-              <Rect x={x(p.x) - 18} y={y(p.y) - 18} width={36} height={36} fill="transparent" />
+              <Rect x={x(p.x) - 24} y={y(p.y) - 24} width={48} height={48} fill="transparent" />
             </G>
           ))}
         </Svg>

@@ -68,7 +68,14 @@ export default function Contracoes() {
         <Text style={{ fontFamily: fontes.extra, fontSize: 26, color: ativa ? cores.textoNaPrimaria : cores.texto }}>
           {ativa ? 'Acabou' : 'Começou'}
         </Text>
-        <Text style={{ fontFamily: fontes.negrito, fontSize: 20, color: ativa ? cores.textoNaPrimaria : cores.textoSuave }}>
+        <Text
+          style={{
+            fontFamily: fontes.negrito,
+            fontSize: ativa ? 20 : 16,
+            textAlign: 'center',
+            maxWidth: 170,
+            color: ativa ? cores.textoNaPrimaria : cores.textoSuave,
+          }}>
           {ativa
             ? cronometro(agora - t(ativa.inicio))
             : desdeUltima !== null && desdeUltima < 2 * 60 * MIN
@@ -89,7 +96,7 @@ export default function Contracoes() {
               {e.quantidade > 1 ? ` · uma a cada ${Math.round(e.intervaloMedio / MIN)} min` : ''}
             </Texto>
             {e.cincoUmUm && (
-              <View style={{ backgroundColor: cores.fralda, borderRadius: 14, padding: 12 }}>
+              <View style={{ backgroundColor: cores.aviso, borderWidth: 1, borderColor: cores.fralda, borderRadius: 14, padding: 12 }}>
                 <Text style={{ fontFamily: fontes.negrito, fontSize: 16, color: cores.textoNaPrimaria }}>
                   Padrão 5-1-1: contrações a cada 5 minutos ou menos, de cerca de 1 minuto, há 1 hora. É a orientação
                   comum para ligar para a obstetra ou ir para a maternidade.

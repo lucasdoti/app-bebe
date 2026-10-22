@@ -21,7 +21,7 @@ function Opcao({ ativo, titulo, onPress }: { ativo: boolean; titulo: string; onP
       onPress={onPress}
       style={{
         flex: 1,
-        minHeight: 48,
+        minHeight: ALVO_TOQUE,
         borderRadius: 16,
         borderWidth: 1.5,
         borderColor: ativo ? cores.primaria : cores.borda,

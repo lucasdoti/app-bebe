@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import type { ComponentProps, ReactNode } from 'react';
+import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -15,8 +15,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { INICIO } from '@/lib/app';
 import { ALVO_TOQUE, fontes, raio } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
+
+// Dentro das abas, a barra de abas já cuida da margem de baixo do celular.
+export const DentroDeAba = createContext(false);
 
 export function Tela({
   children,
@@ -30,8 +34,11 @@ export function Tela({
   rodape?: ReactNode;
 }) {
   const { cores } = useTema();
+  const naAba = useContext(DentroDeAba);
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: cores.fundo }}>
+    <SafeAreaView
+      edges={naAba ? ['top', 'left', 'right'] : undefined}
+      style={{ flex: 1, backgroundColor: cores.fundo }}>
       {topo && <View style={estilos.faixa}>{topo}</View>}
       <ScrollView
         contentContainerStyle={[estilos.conteudo, centralizar && { flexGrow: 1, justifyContent: 'center' }]}
@@ -47,13 +54,14 @@ export function Tela({
   );
 }
 
-// Cabeçalho das telas internas, com botão de voltar grande.
-export function Cabecalho({ titulo }: { titulo: string }) {
+// Cabeçalho das telas internas, com botão de voltar grande. Nas abas (semVoltar), só o título.
+export function Cabecalho({ titulo, semVoltar }: { titulo: string; semVoltar?: boolean }) {
   const { cores } = useTema();
   function voltar() {
     if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else router.replace(INICIO);
   }
+  if (semVoltar) return <Texto variante="titulo">{titulo}</Texto>;
   return (
     <View style={estilos.linha}>
       <Pressable

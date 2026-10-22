@@ -197,7 +197,7 @@ export default function FichaDeSaude() {
         </View>
       </View>
 
-      <View style={{ backgroundColor: cores.fralda, borderRadius: 16, padding: 14 }}>
+      <View style={{ backgroundColor: cores.aviso, borderWidth: 1, borderColor: cores.fralda, borderRadius: 16, padding: 14 }}>
         <Text style={{ fontFamily: fontes.media, fontSize: 15, color: cores.textoNaPrimaria }}>
           Copie aqui exatamente a lista que o médico ou o serviço de triagem entregou. O app não traz listas prontas: as que
           circulam na internet não batem entre si. Na dúvida, pergunte ao médico.

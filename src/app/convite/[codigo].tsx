@@ -1,5 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
+import { INICIO } from '@/lib/app';
 import { useSessao } from '@/context/sessao';
 import { guardarConvite } from '@/lib/convite';
 
@@ -8,5 +9,5 @@ export default function Convite() {
   const { codigo } = useLocalSearchParams<{ codigo: string }>();
   const { sessao, familia } = useSessao();
   if (codigo) guardarConvite(codigo);
-  return <Redirect href={!sessao ? '/entrar' : familia ? '/' : '/familia'} />;
+  return <Redirect href={!sessao ? '/entrar' : familia ? INICIO : '/familia'} />;
 }

@@ -69,6 +69,9 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Cartões: última mamada/refeição (há quanto tempo), sono atual ou janela de vigília, fraldas do dia, clima e roupa sugerida, próxima dose de remédio.
 - Botões grandes de registro rápido no rodapé.
 - Linha do tempo das últimas 24h.
+- Navegação por abas (2026-10-22), fixas embaixo. Depois do nascimento: Início, Histórico, Bebê (sono, clima e roupa, medidas, vacinas, remédios, ficha de saúde, resumo, enxoval e chá) e Família (bebês, convite, aparência, lembretes, sair). Na gestação: Início, Pré-natal, Preparar (enxoval, chá, mala, chegou a hora, nomes, vacinas da mãe) e Família. As abas mudam com o bebê selecionado. Telas de detalhe abrem por cima das abas, com botão de voltar.
+- Na gestação, a home mostra só o essencial (semana, próxima consulta, último ultrassom, contrações e movimentos, chegou a hora) e o cartão de vacina apenas quando há dose para tomar agora; o resto fica na aba Preparar.
+- Janela de vigília só conta a partir de um sono das últimas 24h; sem isso o cartão mostra "Sono —".
 
 **RF3. Alimentação**
 
@@ -312,6 +315,8 @@ Visual fofinho em tons pastéis, com um modo noturno escuro e de baixo brilho qu
 - **Roupa sugerida:** ilustração de um bonequinho vestido com as camadas, no lugar de uma lista de texto.
 - **Logo:** bebê dormindo no colo de uma lua lilás, com estrelinhas amarelas, sobre fundo creme (escolhido em 2026-10-14). Fonte em `assets/logo/`; os ícones são gerados por `scripts/gerar-icones.mjs`.
 - **Modo noite automático** entre 20h e 6h, com opção manual.
+- **Avisos de atenção** (febre, quando ir para a maternidade, ficha de saúde): amarelo no dia; à noite, mostarda bem escuro com borda amarela, para o texto manter contraste de 7:1.
+- **Revisão visual (2026-10-22):** chips e links com pelo menos 56 px de altura, pontos dos gráficos com área de toque de 48 px, valores em reais sem quebrar entre "R$" e o número.
 
 ## Riscos, questões em aberto e próximos passos
 

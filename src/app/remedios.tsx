@@ -191,7 +191,7 @@ export default function Remedios() {
           </Pressable>
         ))}
         {(teveFebre || menorDe3Meses) && (
-          <View style={{ backgroundColor: cores.fralda, borderRadius: 14, padding: 12 }}>
+          <View style={{ backgroundColor: cores.aviso, borderWidth: 1, borderColor: cores.fralda, borderRadius: 14, padding: 12 }}>
             <Text style={{ fontFamily: fontes.media, fontSize: 15, color: cores.textoNaPrimaria }}>
               {menorDe3Meses
                 ? 'Bebê com menos de 3 meses e temperatura a partir de 37,8 °C: procure atendimento médico.'

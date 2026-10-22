@@ -16,6 +16,8 @@ export const paletaDia = {
   // Gráficos: linha do bebê (validada contra o cartão) e grade discreta.
   medidasForte: '#1E8A68',
   grade: '#EFE7DC',
+  // Caixas de atenção (febre, quando ir para a maternidade, ficha de saúde...).
+  aviso: '#F9DE8B',
 };
 
 // Noite: azul-marinho bem escuro e pastéis dessaturados, com pouco brilho.
@@ -35,6 +37,8 @@ export const paletaNoite: typeof paletaDia = {
   clima: '#5C7B95',
   medidasForte: '#2E9E7A',
   grade: '#222B44',
+  // Mostarda bem escuro: o texto claro fica legível (contraste 7:1), com borda na cor da fralda.
+  aviso: '#3A3322',
 };
 
 export type Paleta = typeof paletaDia;

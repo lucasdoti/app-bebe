@@ -159,8 +159,8 @@ export function resumo(registros: Registro[], agora = Date.now()) {
     ultimaAlimentacao,
     peitoAtivo: peitoAtivo as Extract<Registro, { tipo: 'mamada' }> | null,
     dormindo,
-    // Janela de vigília: desde o fim do último sono.
-    acordadoDesde: !dormindo && ultimoSono?.fim ? ultimoSono.fim : null,
+    // Janela de vigília: desde o fim do último sono (sono de mais de 24h atrás não conta: faltou registrar).
+    acordadoDesde: !dormindo && ultimoSono?.fim && agora - ms(ultimoSono.fim) < 24 * HORA ? ultimoSono.fim : null,
     sono24h,
     cochilos,
     fraldasHoje: fraldasHoje.length,

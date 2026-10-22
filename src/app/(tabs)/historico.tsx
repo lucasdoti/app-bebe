@@ -130,7 +130,7 @@ export default function Historico() {
 
   return (
     <Tela>
-      <Cabecalho titulo="Histórico" />
+      <Cabecalho titulo="Histórico" semVoltar />
 
       <Cartao>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>

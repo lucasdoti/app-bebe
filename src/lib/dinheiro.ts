@@ -2,7 +2,8 @@
 
 const formato = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export const reais = (v: number) => formato.format(v).replace(/ /g, ' ');
+// Espaço inquebrável: o "R$" nunca fica sozinho no fim da linha.
+export const reais = (v: number) => formato.format(v).replace(/\s/g, ' ');
 
 // Máscara enquanto digita, em centavos: "12345" -> "123,45"; "1234567" -> "12.345,67".
 export function mascaraDinheiro(texto: string) {

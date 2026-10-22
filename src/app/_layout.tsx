@@ -84,14 +84,13 @@ function Rotas() {
       <StatusBar style={noite ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cores.fundo } }}>
         <Stack.Protected guard={logado && !!familia}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="ajustes" />
+          {/* Abas: Início, Histórico/Pré-natal, Bebê/Preparar e Família. As demais telas abrem por cima. */}
+          <Stack.Screen name="(tabs)" />
           <Stack.Screen name="bebe/[id]" />
           <Stack.Screen name="registro/[id]" />
           <Stack.Screen name="medidas" />
           <Stack.Screen name="medida/[id]" />
           <Stack.Screen name="roupa" />
-          <Stack.Screen name="pre-natal/index" />
           <Stack.Screen name="pre-natal/[id]" />
           <Stack.Screen name="contracoes" />
           <Stack.Screen name="mala" />
@@ -108,7 +107,6 @@ function Rotas() {
           <Stack.Screen name="plano-parto" />
           <Stack.Screen name="resumo" />
           <Stack.Screen name="sono" />
-          <Stack.Screen name="historico" />
           <Stack.Screen name="gastos" />
           <Stack.Screen name="gasto/[id]" />
           <Stack.Screen name="saude/index" />

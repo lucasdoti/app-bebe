@@ -8,7 +8,7 @@ import { Folha } from '@/components/folha';
 import { InicioGestacao } from '@/components/inicio-gestacao';
 import { LinhaRegistro } from '@/components/linha-registro';
 import { BotaoRegistro, CartaoResumo, SeletorBebe, type NomeIcone } from '@/components/home';
-import { Botao, BotaoIcone, Cartao, Escolha, Tela, Texto } from '@/components/ui';
+import { Botao, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes } from '@/context/bebes';
 import { useClima } from '@/context/clima';
 import { useMedidas } from '@/context/medidas';
@@ -107,7 +107,6 @@ export default function Inicio() {
           <Texto variante="suave">{familia?.nome}</Texto>
         )}
       </View>
-      <BotaoIcone icone="settings-outline" rotulo="Ajustes" onPress={() => router.push('/ajustes')} />
     </View>
   );
 
@@ -471,8 +470,6 @@ export default function Inicio() {
           icone={<MaterialCommunityIcons name="calendar-month-outline" size={20} color={cores.texto} />}
         />
       </Cartao>
-
-      <Botao titulo="Resumo para o pediatra" variante="secundario" onPress={() => router.push('/resumo')} />
 
       <Folha aberta={painel === 'mamada'} titulo="Mamada" onFechar={() => setPainel(null)}>
         <PainelMamada

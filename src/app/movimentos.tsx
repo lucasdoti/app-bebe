@@ -78,7 +78,7 @@ export default function Movimentos() {
         />
       )}
 
-      <View style={{ backgroundColor: cores.fralda, borderRadius: 14, padding: 12 }}>
+      <View style={{ backgroundColor: cores.aviso, borderWidth: 1, borderColor: cores.fralda, borderRadius: 14, padding: 12 }}>
         <Text style={{ fontFamily: fontes.media, fontSize: 15, color: cores.textoNaPrimaria }}>
           Se perceber o bebê mexendo menos que o normal, ou se não chegar a {META} movimentos em 2 horas, procure a
           maternidade ou a obstetra no mesmo dia. Não espere até o dia seguinte.

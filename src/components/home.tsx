@@ -131,11 +131,11 @@ const estilos = StyleSheet.create({
   },
   registro: {
     flex: 1,
-    minHeight: 76,
+    minHeight: 64,
     borderRadius: raio.botao,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 2,
   },
   chip: {
     minHeight: ALVO_TOQUE,

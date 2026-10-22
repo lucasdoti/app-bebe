@@ -101,7 +101,11 @@ export default function Sono() {
             total={dia.total}
             agora={agora}
             dormindoDesde={diasAtras === 0 && sonoAtual ? sonoAtual.inicio : null}
-            acordadoDesde={diasAtras === 0 && !sonoAtual && ultimoSono?.fim ? ultimoSono.fim : null}
+            acordadoDesde={
+              diasAtras === 0 && !sonoAtual && ultimoSono?.fim && agora - new Date(ultimoSono.fim).getTime() < 24 * 60 * MINUTO
+                ? ultimoSono.fim
+                : null
+            }
             previsao={previsao}
           />
         </RelogioSono>

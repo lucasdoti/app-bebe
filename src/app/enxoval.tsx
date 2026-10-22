@@ -50,7 +50,7 @@ function Chips<T extends string>({
             accessibilityState={{ selected: ativo }}
             onPress={() => onChange(o.valor)}
             style={{
-              minHeight: 48,
+              minHeight: ALVO_TOQUE,
               paddingHorizontal: 16,
               borderRadius: 999,
               borderWidth: 1.5,
@@ -435,7 +435,7 @@ export default function Enxoval() {
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 gap: 6,
-                                minHeight: 44,
+                                minHeight: ALVO_TOQUE,
                                 opacity: pressed ? 0.7 : 1,
                               })}>
                               <MaterialCommunityIcons name="open-in-new" size={18} color={cores.texto} />
@@ -453,7 +453,7 @@ export default function Enxoval() {
                               setTextoLink(i.link ?? '');
                               setEditandoLink(i);
                             }}
-                            style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8 }}>
+                            style={{ minHeight: ALVO_TOQUE, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8 }}>
                             <MaterialCommunityIcons name="link-variant" size={18} color={cores.textoSuave} />
                             <Text style={{ fontFamily: fontes.media, fontSize: 14, color: cores.textoSuave }}>
                               {i.link ? 'Mudar link' : 'Pôr link'}

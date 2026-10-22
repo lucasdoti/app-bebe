@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { INICIO } from '@/lib/app';
 import { AvisoFicha } from '@/components/aviso-ficha';
 import { Aviso, Botao, Cabecalho, Campo, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
@@ -47,7 +48,7 @@ function opcoesDia(extra: number) {
 
 function voltar() {
   if (router.canGoBack()) router.back();
-  else router.replace('/');
+  else router.replace(INICIO);
 }
 
 // Dia + hora num campo só, com máscara HH:MM.

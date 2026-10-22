@@ -32,7 +32,9 @@ export function AlertaSaude() {
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: raio.botao,
-        backgroundColor: cores.fralda,
+        backgroundColor: cores.aviso,
+        borderWidth: 1,
+        borderColor: cores.fralda,
         opacity: pressed ? 0.8 : 1,
       })}>
       <MaterialCommunityIcons name="alert-circle-outline" size={24} color={cores.textoNaPrimaria} />
