@@ -1,13 +1,16 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { Folha } from '@/components/folha';
 import { LinhaRegistro } from '@/components/linha-registro';
-import { Aviso, Cabecalho, Cartao, Tela, Texto } from '@/components/ui';
-import { useBebes } from '@/context/bebes';
+import { Aviso, Botao, Cabecalho, Cartao, Tela, Texto } from '@/components/ui';
+import { nasceu, useBebes } from '@/context/bebes';
 import { useRegistros } from '@/context/registros';
 import { useSessao } from '@/context/sessao';
 import { useAgora } from '@/hooks/use-agora';
+import { fase, hojeISO } from '@/lib/idade';
 import type { Registro, Tipo } from '@/lib/registros';
 import { doDia } from '@/lib/sono';
 import { diasAtras, duracao, inicioDoDia, MINUTO } from '@/lib/tempo';
@@ -66,6 +69,7 @@ export default function Historico() {
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [carregando, setCarregando] = useState(false);
   const [semInternet, setSemInternet] = useState(false);
+  const [escolhendoTipo, setEscolhendoTipo] = useState(false);
 
   const { carregarPeriodo } = reg;
   const bebeId = bebeAtual?.id;
@@ -108,6 +112,18 @@ export default function Historico() {
   const doDiaEscolhido = (porDia.get(chaveDia(dia)) ?? []).filter(passa);
   const sono = filtro === 'todos' || filtro === 'sono' ? doDia(reg.doBebe, diasAtras(dia, hoje), agora).total : 0;
   const resumo = resumoDoDia(doDiaEscolhido, sono);
+  // Tipos que dá para registrar depois, conforme a fase (refeição e água a partir dos 6 meses).
+  const comeSolidos = nasceu(bebeAtual) && fase(bebeAtual.nascimento) !== 'mamadas';
+  const tiposParaRegistrar = (
+    [
+      ['mamada', 'Mamada no peito'],
+      ['mamadeira', 'Mamadeira'],
+      ['refeicao', 'Refeição'],
+      ['agua', 'Água'],
+      ['sono', 'Sono'],
+      ['fralda', 'Fralda'],
+    ] as [Tipo, string][]
+  ).filter(([t]) => comeSolidos || (t !== 'refeicao' && t !== 'agua'));
   const nomeAutor = (id: string) => membros.find((m) => m.user_id === id)?.nome ?? 'alguém';
 
   // Grade do mês: começa no domingo, como a semana do clima.
@@ -265,7 +281,26 @@ export default function Historico() {
         {[...doDiaEscolhido].reverse().map((x) => (
           <LinhaRegistro key={x.id} registro={x} agora={agora} autor={nomeAutor(x.autor_id)} />
         ))}
+        <Botao
+          titulo={chaveDia(dia) === chaveDia(hoje) ? 'Registrar algo que já passou' : 'Registrar algo neste dia'}
+          variante="secundario"
+          onPress={() => setEscolhendoTipo(true)}
+        />
       </Cartao>
+
+      <Folha aberta={escolhendoTipo} titulo={`O que registrar em ${dia.getDate()}/${dia.getMonth() + 1}?`} onFechar={() => setEscolhendoTipo(false)}>
+        {tiposParaRegistrar.map(([t, titulo]) => (
+          <Botao
+            key={t}
+            titulo={titulo}
+            variante="secundario"
+            onPress={() => {
+              setEscolhendoTipo(false);
+              router.push({ pathname: '/registro/[id]', params: { id: 'novo', tipo: t, data: hojeISO(dia) } });
+            }}
+          />
+        ))}
+      </Folha>
     </Tela>
   );
 }

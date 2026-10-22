@@ -10,7 +10,7 @@ import { useRegistros } from '@/context/registros';
 import { useSaude } from '@/context/saude';
 import { confirmar } from '@/lib/confirmar';
 import { itensNaLista } from '@/lib/saude';
-import { fase } from '@/lib/idade';
+import { deISO, fase, hojeISO, mascaraData, paraISO } from '@/lib/idade';
 import {
   observacaoDe,
   temposPorLado,
@@ -21,7 +21,7 @@ import {
   type Tipo,
 } from '@/lib/registros';
 import { lerPref } from '@/lib/storage';
-import { combinar, diasAtras, horaCurta, mascaraHora, MINUTO, rotuloDia } from '@/lib/tempo';
+import { combinar, diasAtras, horaCurta, mascaraHora, MINUTO } from '@/lib/tempo';
 
 type LadoForm = Lado | 'ambos';
 type Oque = 'xixi' | 'coco' | 'ambos';
@@ -41,10 +41,22 @@ const titulos: Record<Tipo, string> = {
   febre: 'Temperatura',
 };
 
-// Hoje e ontem; ao editar um registro mais antigo, o dia dele também aparece.
-function opcoesDia(extra: number) {
-  const dias = [...new Set([0, 1, extra])].sort((a, b) => a - b);
-  return dias.map((d) => ({ valor: String(d), titulo: rotuloDia(d) }));
+// Dia do registro: hoje, ontem ou outro dia digitado (DD/MM/AAAA).
+type Dia = { opcao: 'hoje' | 'ontem' | 'outro'; data: string };
+
+function diaDe(d: Date): Dia {
+  const n = diasAtras(d);
+  if (n === 0) return { opcao: 'hoje', data: '' };
+  if (n === 1) return { opcao: 'ontem', data: '' };
+  return { opcao: 'outro', data: deISO(hojeISO(d)) };
+}
+
+// Dias antes de hoje (0 = hoje); null se a data digitada for inválida.
+function diasDoDia(d: Dia): number | null {
+  if (d.opcao === 'hoje') return 0;
+  if (d.opcao === 'ontem') return 1;
+  const iso = paraISO(d.data);
+  return iso ? diasAtras(new Date(`${iso}T12:00:00`)) : null;
 }
 
 function voltar() {
@@ -52,25 +64,43 @@ function voltar() {
   else router.replace(INICIO);
 }
 
-// Dia + hora num campo só, com máscara HH:MM.
+// Dia + hora, com máscaras DD/MM/AAAA e HH:MM.
 function DiaHora({
   rotulo,
-  dias,
   dia,
   hora,
   onDia,
   onHora,
 }: {
   rotulo: string;
-  dias: number;
-  dia: string;
+  dia: Dia;
   hora: string;
-  onDia: (d: string) => void;
+  onDia: (d: Dia) => void;
   onHora: (h: string) => void;
 }) {
   return (
     <View style={{ gap: 10 }}>
-      <Escolha rotulo={rotulo} opcoes={opcoesDia(dias)} valor={dia} onChange={onDia} />
+      <Escolha<Dia['opcao']>
+        rotulo={rotulo}
+        opcoes={[
+          { valor: 'hoje', titulo: 'Hoje' },
+          { valor: 'ontem', titulo: 'Ontem' },
+          { valor: 'outro', titulo: 'Outro dia' },
+        ]}
+        valor={dia.opcao}
+        onChange={(opcao) => onDia({ ...dia, opcao })}
+      />
+      {dia.opcao === 'outro' && (
+        <Campo
+          rotulo="Data"
+          value={dia.data}
+          onChangeText={(t) => onDia({ ...dia, data: mascaraData(t) })}
+          placeholder="DD/MM/AAAA"
+          keyboardType="number-pad"
+          inputMode="numeric"
+          maxLength={10}
+        />
+      )}
       <Campo
         rotulo="Horário"
         value={hora}
@@ -86,7 +116,8 @@ function DiaHora({
 
 // /registro/novo?tipo=mamada registra algo que já passou; /registro/<id> edita ou apaga.
 export default function RegistroForm() {
-  const { id, tipo: tipoParam } = useLocalSearchParams<{ id: string; tipo?: Tipo }>();
+  // ?data=AAAA-MM-DD vem do histórico ("Registrar algo neste dia").
+  const { id, tipo: tipoParam, data: dataParam } = useLocalSearchParams<{ id: string; tipo?: Tipo; data?: string }>();
   const { bebeAtual } = useBebes();
   const saude = useSaude();
   const { doBebe, criar, atualizar, excluir } = useRegistros();
@@ -96,15 +127,22 @@ export default function RegistroForm() {
 
   const agora = new Date();
   // Mamada e sono anteriores costumam ter começado há pouco; fralda e o resto, agora.
+  const noDia = !existente && dataParam && /^\d{4}-\d{2}-\d{2}$/.test(dataParam) && dataParam !== hojeISO(agora);
   const inicioBase = existente
     ? new Date(existente.inicio)
-    : new Date(agora.getTime() - (tipo === 'mamada' || tipo === 'sono' ? 15 * MINUTO : 0));
-  const fimBase = existente?.fim ? new Date(existente.fim) : agora;
+    : noDia
+      ? new Date(`${dataParam}T12:00:00`)
+      : new Date(agora.getTime() - (tipo === 'mamada' || tipo === 'sono' ? 15 * MINUTO : 0));
+  const fimBase = existente?.fim
+    ? new Date(existente.fim)
+    : noDia
+      ? new Date(inicioBase.getTime() + 60 * MINUTO)
+      : agora;
 
-  const [dia, setDia] = useState(String(diasAtras(inicioBase)));
-  const [hora, setHora] = useState(horaCurta(inicioBase));
-  const [diaFim, setDiaFim] = useState(String(diasAtras(fimBase)));
-  const [horaFim, setHoraFim] = useState(horaCurta(fimBase));
+  const [dia, setDia] = useState<Dia>(diaDe(inicioBase));
+  const [hora, setHora] = useState(noDia ? '' : horaCurta(inicioBase));
+  const [diaFim, setDiaFim] = useState<Dia>(diaDe(fimBase));
+  const [horaFim, setHoraFim] = useState(noDia ? '' : horaCurta(fimBase));
   const [erro, setErro] = useState<string | null>(null);
 
   // Peito
@@ -169,9 +207,13 @@ export default function RegistroForm() {
 
   function gravar() {
     setErro(null);
-    const inicio = combinar(Number(dia), hora);
+    const dias = diasDoDia(dia);
+    if (dias === null) return setErro('Data no formato DD/MM/AAAA, por exemplo 05/10/2026.');
+    const inicio = combinar(dias, hora);
     if (!inicio) return setErro('Horário no formato HH:MM, por exemplo 14:05.');
-    if (inicio.getTime() > Date.now() + MINUTO) return setErro('O horário está no futuro.');
+    if (inicio.getTime() > Date.now() + MINUTO) return setErro('O dia e o horário estão no futuro.');
+    if (bebeAtual?.nascimento && hojeISO(inicio) < bebeAtual.nascimento && !existente)
+      return setErro(`A data é antes do nascimento (${deISO(bebeAtual.nascimento)}).`);
     const ini = inicio.toISOString();
 
     // Registro em andamento: só o início muda.
@@ -223,7 +265,9 @@ export default function RegistroForm() {
       if (aindaDormindo) {
         fim = null;
       } else {
-        const f = combinar(Number(diaFim), horaFim);
+        const diasFim = diasDoDia(diaFim);
+        if (diasFim === null) return setErro('Data em que acordou no formato DD/MM/AAAA.');
+        const f = combinar(diasFim, horaFim);
         if (!f) return setErro('Horário em que acordou no formato HH:MM.');
         if (f <= inicio) return setErro('O fim do sono precisa ser depois do início.');
         if (f.getTime() > Date.now() + MINUTO) return setErro('O horário em que acordou está no futuro.');
@@ -276,7 +320,6 @@ export default function RegistroForm() {
 
       <DiaHora
         rotulo={tipo === 'sono' ? 'Dormiu' : 'Quando'}
-        dias={diasAtras(inicioBase)}
         dia={dia}
         hora={hora}
         onDia={setDia}
@@ -389,7 +432,7 @@ export default function RegistroForm() {
             onChange={(v) => setAindaDormindo(v === 'sim')}
           />
           {!aindaDormindo && (
-            <DiaHora rotulo="Acordou" dias={diasAtras(fimBase)} dia={diaFim} hora={horaFim} onDia={setDiaFim} onHora={setHoraFim} />
+            <DiaHora rotulo="Acordou" dia={diaFim} hora={horaFim} onDia={setDiaFim} onHora={setHoraFim} />
           )}
         </>
       )}
