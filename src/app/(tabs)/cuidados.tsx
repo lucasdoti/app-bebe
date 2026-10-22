@@ -1,8 +1,9 @@
 import { GrupoMenu, ItemMenu } from '@/components/menu';
 import { Cabecalho, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes } from '@/context/bebes';
+import { useDentes } from '@/context/dentes';
 import { useRegistros } from '@/context/registros';
-import { idadeTexto } from '@/lib/idade';
+import { deISO, idade, idadeTexto } from '@/lib/idade';
 import { doDia } from '@/lib/sono';
 import { duracao, MINUTO } from '@/lib/tempo';
 import { useTema } from '@/theme/tema';
@@ -11,6 +12,7 @@ import { useTema } from '@/theme/tema';
 export default function Cuidados() {
   const { bebeAtual } = useBebes();
   const { doBebe } = useRegistros();
+  const { dentes } = useDentes();
   const { cores } = useTema();
   if (!nasceu(bebeAtual)) return null;
 
@@ -35,6 +37,15 @@ export default function Cuidados() {
       <GrupoMenu titulo="Saúde">
         <ItemMenu cor={cores.medidas} icone="ruler" titulo="Medidas" detalhe="Peso, altura e curvas da OMS" href="/medidas" />
         <ItemMenu cor={cores.medidas} icone="needle" titulo="Vacinas" detalhe="Calendário do SUS e doses tomadas" href="/vacinas" />
+        {(idade(bebeAtual.nascimento).meses >= 4 || dentes.length > 0) && (
+          <ItemMenu
+            cor={cores.clima}
+            icone="tooth-outline"
+            titulo="Dentinhos"
+            detalhe={dentes.length ? `${dentes.length} de 20 · último em ${deISO(dentes.at(-1)!.nasceu_em)}` : 'Anote cada dente que nascer'}
+            href="/dentes"
+          />
+        )}
         <ItemMenu cor={cores.medidas} icone="pill" titulo="Remédios e febre" detalhe="Doses, horários e temperatura" href="/remedios" />
         <ItemMenu
           cor={cores.mamada}

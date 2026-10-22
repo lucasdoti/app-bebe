@@ -5,6 +5,7 @@ import { Linking, Platform, Share, View } from 'react-native';
 
 import { Aviso, Botao, Cabecalho, Campo, Cartao, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes, type Bebe, type BebeNascido } from '@/context/bebes';
+import { useDentes } from '@/context/dentes';
 import { useGestacao } from '@/context/gestacao';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
@@ -12,6 +13,7 @@ import { useRemedios } from '@/context/remedios';
 import { useSaude } from '@/context/saude';
 import { useVacinas } from '@/context/vacinas';
 import { idadeEmDias, percentil, percentilTexto, pontosDe, type Indicador } from '@/lib/crescimento';
+import { denteDoCodigo, nomeDente } from '@/lib/dentes';
 import { idadeGestacional, idadeGestacionalNaData, pesoTexto, semanasTexto } from '@/lib/gestacao';
 import { deISO, hojeISO, idadeTexto } from '@/lib/idade';
 import { numeroBR, resumoDaSemana } from '@/lib/resumo';
@@ -94,6 +96,7 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
   const { situacao } = useRemedios();
   const { aplicadas } = useVacinas();
   const saude = useSaude();
+  const { dentes } = useDentes();
   const r = resumoDaSemana(doBebe, 7);
 
   const rotina = [
@@ -141,6 +144,17 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
   if (atencao.length) secoes.push({ titulo: '⚠️ Atenção', linhas: atencao });
   secoes.push({ titulo: `Rotina (média dos últimos ${r.dias} dias)`, linhas: rotina });
   if (crescimento.length) secoes.push({ titulo: 'Crescimento', linhas: crescimento });
+  if (dentes.length) {
+    const ultimo = dentes.at(-1)!;
+    const d = denteDoCodigo(ultimo.codigo);
+    secoes.push({
+      titulo: 'Dentes',
+      linhas: [
+        `${dentes.length} de 20 dentes de leite; primeiro em ${deISO(dentes[0].nasceu_em)}`,
+        `Último: ${d ? nomeDente(d).toLowerCase() : ultimo.codigo}, em ${deISO(ultimo.nasceu_em)}`,
+      ],
+    });
+  }
   if (remedios.length) secoes.push({ titulo: 'Remédios em uso', linhas: remedios });
   secoes.push({
     titulo: 'Vacinas',

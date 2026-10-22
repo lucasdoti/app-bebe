@@ -238,6 +238,16 @@ Pedido de uma mãe cujo filho tem deficiência de G6PD e leva em toda consulta a
 - **Avisos:** ao cadastrar um remédio ou registrar uma refeição que bata com a lista (por palavra, nome comercial ou sigla), o app avisa e pede confirmação; faixa de alerta na home; seção "⚠️ Atenção" no topo do resumo para o pediatra. A comparação ajuda, mas não substitui conferir com o médico.
 - **Mostrar ao médico:** tela em letra grande e envio pelo WhatsApp. A ficha fica guardada no aparelho e abre sem internet.
 
+## Dentinhos
+
+Pedido de uma mãe conhecida (2026-10-22). Sem fotos, por privacidade da família.
+
+- Tela "Dentinhos" na aba Bebê (aparece a partir dos 4 meses ou quando já há dente marcado): desenho da boca aberta com os 20 dentes de leite, como se olhasse de frente para o bebê. Tocar no dente abre a data em que nasceu (hoje já preenchido, nunca no futuro nem antes do nascimento) e uma observação ("babou muito", "começou a apontar dia 10").
+- Dentes nascidos ficam preenchidos; o mais recente ganha um pontinho. Lista "Próximos a nascer" com a idade típica de cada dente (tabela da American Dental Association) e linha do tempo com a idade em que cada um nasceu.
+- No primeiro dente, o app lembra da primeira consulta com o odontopediatra (até 1 ano) e da escovação com creme dental com flúor do tamanho de um grão de arroz.
+- O resumo para o pediatra mostra quantos dentes, o primeiro e o último.
+- Tabela `dentes` (bebe_id, codigo do dente, nasceu_em, observacao), isolada por família via RLS.
+
 ## V2 e backlog
 
 A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.

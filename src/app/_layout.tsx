@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 
 import { BebesProvider } from '@/context/bebes';
 import { ClimaProvider } from '@/context/clima';
+import { DentesProvider } from '@/context/dentes';
 import { EnxovalProvider } from '@/context/enxoval';
 import { GestacaoProvider } from '@/context/gestacao';
 import { MedidasProvider } from '@/context/medidas';
@@ -44,7 +45,9 @@ export default function RootLayout() {
                         <VacinasProvider>
                           <PartoProvider>
                             <SaudeProvider>
-                              <Rotas />
+                              <DentesProvider>
+                                <Rotas />
+                              </DentesProvider>
                             </SaudeProvider>
                           </PartoProvider>
                         </VacinasProvider>
@@ -111,6 +114,7 @@ function Rotas() {
           <Stack.Screen name="gasto/[id]" />
           <Stack.Screen name="saude/index" />
           <Stack.Screen name="saude/medico" />
+          <Stack.Screen name="dentes" />
           <Stack.Screen name="cha/index" />
         </Stack.Protected>
         <Stack.Protected guard={logado && !familia}>
