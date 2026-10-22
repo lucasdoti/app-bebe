@@ -14,6 +14,7 @@ export function corDoTipo(t: Tipo, cores: Paleta) {
     mamada: cores.mamada,
     mamadeira: cores.mamada,
     refeicao: cores.mamada,
+    agua: cores.clima,
     sono: cores.sono,
     fralda: cores.fralda,
     contracao: cores.mamada,
@@ -26,6 +27,7 @@ export function corDoTipo(t: Tipo, cores: Paleta) {
 
 export function iconeDoTipo(r: Registro): NomeIcone {
   if (r.tipo === 'refeicao') return 'food-apple-outline';
+  if (r.tipo === 'agua') return 'cup-water';
   if (r.tipo === 'sono') return 'sleep';
   if (r.tipo === 'contracao') return 'timer-outline';
   if (r.tipo === 'movimentos') return 'gesture-tap';

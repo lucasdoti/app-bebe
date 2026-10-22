@@ -18,7 +18,7 @@ type Grupo = 'alimentacao' | 'sono' | 'fralda' | 'saude' | 'gestacao';
 type Filtro = Grupo | 'todos';
 
 const GRUPOS: { grupo: Grupo; titulo: string; tipos: Tipo[] }[] = [
-  { grupo: 'alimentacao', titulo: 'Alimentação', tipos: ['mamada', 'mamadeira', 'refeicao'] },
+  { grupo: 'alimentacao', titulo: 'Alimentação', tipos: ['mamada', 'mamadeira', 'refeicao', 'agua'] },
   { grupo: 'sono', titulo: 'Sono', tipos: ['sono'] },
   { grupo: 'fralda', titulo: 'Fralda', tipos: ['fralda'] },
   { grupo: 'saude', titulo: 'Remédio e febre', tipos: ['dose', 'febre'] },
@@ -37,9 +37,11 @@ const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um :
 // Resumo de uma linha do dia escolhido: "6 mamadas · 11h20 de sono · 7 fraldas".
 function resumoDoDia(registros: Registro[], sonoMs: number) {
   const conta = (tipos: Tipo[]) => registros.filter((r) => tipos.includes(r.tipo)).length;
+  const aguaMl = registros.reduce((t, r) => t + (r.tipo === 'agua' ? r.detalhes.ml : 0), 0);
   const partes = [
     conta(['mamada', 'mamadeira']) && plural(conta(['mamada', 'mamadeira']), 'mamada', 'mamadas'),
     conta(['refeicao']) && plural(conta(['refeicao']), 'refeição', 'refeições'),
+    aguaMl > 0 && `${aguaMl} ml de água`,
     sonoMs >= MINUTO && `${duracao(sonoMs)} de sono`,
     conta(['fralda']) && plural(conta(['fralda']), 'fralda', 'fraldas'),
     conta(['dose']) && plural(conta(['dose']), 'dose de remédio', 'doses de remédio'),

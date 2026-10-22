@@ -42,7 +42,7 @@ import { cronometro, duracao, haQuanto, horaCurta, HORA } from '@/lib/tempo';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
-type Painel = 'mamada' | 'fralda' | 'anterior' | null;
+type Painel = 'mamada' | 'comer' | 'fralda' | 'anterior' | null;
 type Toast = { texto: string; acao?: { titulo: string; onPress: () => void } };
 
 // Volumes de mamadeira que acompanham a idade (recém-nascido começa com pouco, às vezes 20–30 ml).
@@ -60,6 +60,12 @@ function volumesPara(idadeMeses: number, ultimo: number | null) {
 }
 
 const abrirRegistro = (id: string) => router.push({ pathname: '/registro/[id]', params: { id } });
+// Água a partir dos 6 meses: goles pequenos, em copinho; o último volume usado também aparece.
+function volumesAgua(ultimo: number | null) {
+  const base = [30, 50, 100, 150];
+  return ultimo && !base.includes(ultimo) ? [...base, ultimo].sort((a, b) => a - b) : base;
+}
+
 const novoRegistro = (tipo: Tipo) => router.push({ pathname: '/registro/[id]', params: { id: 'novo', tipo } });
 
 export default function Inicio() {
@@ -175,11 +181,12 @@ export default function Inicio() {
         icone={icone}
         titulo={titulo}
         valor={ultima ? haQuanto(ultima.inicio, new Date(agora)) : '—'}
-        detalhe={
-          d
-            ? `${d.titulo} · ${d.detalhe}`
-            : 'Nenhum registro ainda'
-        }
+        detalhe={[
+          d ? `${d.titulo} · ${d.detalhe}` : 'Nenhum registro ainda',
+          f !== 'mamadas' && r.aguaHojeVezes > 0 && `Água hoje: ${r.aguaHojeMl} ml (${r.aguaHojeVezes}×)`,
+        ]
+          .filter(Boolean)
+          .join('\n')}
         onPress={ultima ? () => abrirRegistro(ultima.id) : undefined}
       />
     );
@@ -366,7 +373,7 @@ export default function Inicio() {
       cor: cores.mamada,
       icone: 'food-apple-outline',
       titulo: 'Refeição',
-      onPress: () => novoRegistro('refeicao'),
+      onPress: () => setPainel('comer'),
     });
   botoes.push({
     chave: 'sono',
@@ -493,6 +500,24 @@ export default function Inicio() {
         />
       </Folha>
 
+      <Folha aberta={painel === 'comer'} titulo="Comer e beber" onFechar={() => setPainel(null)}>
+        <PainelComer
+          volumes={volumesAgua(
+            (reg.doBebe.find((x) => x.tipo === 'agua') as Extract<Registro, { tipo: 'agua' }> | undefined)?.detalhes.ml ?? null,
+          )}
+          aguaHoje={r.aguaHojeMl}
+          onAgua={(ml) => registrado(`${ml} ml de água registrados`, reg.agua(ml))}
+          onRefeicao={() => {
+            setPainel(null);
+            novoRegistro('refeicao');
+          }}
+          onAnterior={() => {
+            setPainel(null);
+            novoRegistro('agua');
+          }}
+        />
+      </Folha>
+
       <Folha aberta={painel === 'fralda'} titulo="Fralda" onFechar={() => setPainel(null)}>
         <PainelFralda
           mostraPenico={f === 'crianca'}
@@ -518,11 +543,12 @@ export default function Inicio() {
             ['mamada', 'Mamada no peito'],
             ['mamadeira', 'Mamadeira'],
             ['refeicao', 'Refeição'],
+            ['agua', 'Água'],
             ['sono', 'Sono'],
             ['fralda', 'Fralda'],
           ] as [Tipo, string][]
         )
-          .filter(([t]) => !(f === 'mamadas' && t === 'refeicao'))
+          .filter(([t]) => !(f === 'mamadas' && (t === 'refeicao' || t === 'agua')))
           .map(([t, titulo]) => (
             <Botao
               key={t}
@@ -688,6 +714,58 @@ function PainelMamada({
         ))}
       </View>
       <Botao titulo="Outro volume ou horário anterior" variante="texto" onPress={onAnterior} />
+    </>
+  );
+}
+
+function PainelComer({
+  volumes,
+  aguaHoje,
+  onAgua,
+  onRefeicao,
+  onAnterior,
+}: {
+  volumes: number[];
+  aguaHoje: number;
+  onAgua: (ml: number) => void;
+  onRefeicao: () => void;
+  onAnterior: () => void;
+}) {
+  const { cores } = useTema();
+  return (
+    <>
+      <Texto variante="rotulo">Água{aguaHoje ? ` · ${aguaHoje} ml hoje` : ''}</Texto>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {volumes.map((ml) => (
+          <Pressable
+            key={ml}
+            accessibilityRole="button"
+            accessibilityLabel={`Registrar ${ml} ml de água`}
+            onPress={() => onAgua(ml)}
+            style={({ pressed }) => ({
+              flexBasis: '40%',
+              flexGrow: 1,
+              minHeight: ALVO_TOQUE,
+              borderRadius: 20,
+              backgroundColor: cores.clima,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              opacity: pressed ? 0.8 : 1,
+            })}>
+            <MaterialCommunityIcons name="cup-water" size={22} color={cores.textoNaPrimaria} />
+            <Text style={{ fontFamily: fontes.negrito, fontSize: 17, color: cores.textoNaPrimaria }}>{ml} ml</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Botao titulo="Outra quantidade ou horário" variante="texto" onPress={onAnterior} />
+      <Texto variante="rotulo">Comida</Texto>
+      <Botao
+        titulo="Registrar refeição"
+        onPress={onRefeicao}
+        icone={<MaterialCommunityIcons name="food-apple-outline" size={22} color={cores.textoNaPrimaria} />}
+      />
     </>
   );
 }

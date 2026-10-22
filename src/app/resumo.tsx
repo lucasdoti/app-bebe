@@ -101,6 +101,7 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
   ];
   if (r.mamadeiraMlPorDia !== null) rotina.push(`Mamadeira: ${r.mamadeiraMlPorDia} ml por dia`);
   if (r.refeicoesPorDia) rotina.push(`Refeições: ${numeroBR(r.refeicoesPorDia)} por dia`);
+  if (r.aguaMlPorDia) rotina.push(`Água: ${r.aguaMlPorDia} ml por dia`);
   rotina.push(`Sono: ${numeroBR(r.sonoHorasPorDia)} h por dia, ${numeroBR(r.sonosPorDia)} sonos`);
   rotina.push(`Fraldas: ${numeroBR(r.fraldasPorDia)} por dia (${numeroBR(r.xixiPorDia)} xixi, ${numeroBR(r.cocoPorDia)} cocô)`);
   if (r.febreMaxima !== null) rotina.push(`Febre: máxima de ${numeroBR(r.febreMaxima)} °C`);

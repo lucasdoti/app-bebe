@@ -32,6 +32,7 @@ const titulos: Record<Tipo, string> = {
   mamada: 'Mamada no peito',
   mamadeira: 'Mamadeira',
   refeicao: 'Refeição',
+  agua: 'Água',
   sono: 'Sono',
   fralda: 'Fralda',
   contracao: 'Contração',
@@ -116,7 +117,9 @@ export default function RegistroForm() {
   );
 
   // Mamadeira
-  const [ml, setMl] = useState(existente?.tipo === 'mamadeira' ? String(existente.detalhes.ml) : '');
+  const [ml, setMl] = useState(
+    existente?.tipo === 'mamadeira' || existente?.tipo === 'agua' ? String(existente.detalhes.ml) : '',
+  );
   const [leite, setLeite] = useState<Leite>(
     existente?.tipo === 'mamadeira' ? existente.detalhes.leite : ((lerPref('leite_preferido') as Leite) ?? 'materno'),
   );
@@ -205,6 +208,10 @@ export default function RegistroForm() {
       const n = Number(ml);
       if (!(n > 0 && n <= 500)) return setErro('Volume em ml, entre 1 e 500.');
       detalhes = { ml: n, leite };
+    } else if (tipo === 'agua') {
+      const n = Number(ml);
+      if (!(n > 0 && n <= 500)) return setErro('Quantidade em ml, entre 1 e 500.');
+      detalhes = { ml: n };
     } else if (tipo === 'refeicao') {
       if (!alimento.trim()) return setErro('O que o bebê comeu?');
       detalhes = {
@@ -318,6 +325,17 @@ export default function RegistroForm() {
             onChange={setLeite}
           />
         </>
+      )}
+
+      {tipo === 'agua' && (
+        <Campo
+          rotulo="Quantidade de água (ml)"
+          value={ml}
+          onChangeText={setMl}
+          placeholder="Ex.: 50"
+          keyboardType="number-pad"
+          inputMode="numeric"
+        />
       )}
 
       {tipo === 'refeicao' && (
@@ -437,7 +455,9 @@ export default function RegistroForm() {
               ? 'Ex.: acordou chorando, dormiu no colo'
               : tipo === 'mamada' || tipo === 'mamadeira'
                 ? 'Ex.: regurgitou, pegou bem o peito'
-                : 'O que quiser anotar'
+                : tipo === 'agua'
+                  ? 'Ex.: no copinho de transição, recusou'
+                  : 'O que quiser anotar'
         }
         multiline
         maxLength={300}

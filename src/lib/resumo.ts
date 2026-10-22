@@ -12,6 +12,7 @@ export type ResumoSemana = {
   peitoMinPorMamada: number | null;
   mamadeiraMlPorDia: number | null;
   refeicoesPorDia: number;
+  aguaMlPorDia: number | null;
   sonoHorasPorDia: number;
   sonosPorDia: number;
   fraldasPorDia: number;
@@ -53,6 +54,10 @@ export function resumoDaSemana(registros: Registro[], dias = 7, agora = Date.now
     peitoMinPorMamada: minutosPeito.length ? Math.round(minutosPeito.reduce((a, b) => a + b, 0) / minutosPeito.length) : null,
     mamadeiraMlPorDia: mamadeiras.length ? Math.round(mamadeiras.reduce((s, r) => s + r.detalhes.ml, 0) / dias) : null,
     refeicoesPorDia: por(no.filter((r) => r.tipo === 'refeicao').length),
+    aguaMlPorDia: (() => {
+      const agua = no.filter((r): r is Extract<Registro, { tipo: 'agua' }> => r.tipo === 'agua');
+      return agua.length ? Math.round(agua.reduce((s, r) => s + r.detalhes.ml, 0) / dias) : null;
+    })(),
     sonoHorasPorDia: Math.round((sonoMs / dias / 3_600_000) * 10) / 10,
     sonosPorDia: por(sonos),
     fraldasPorDia: por(fraldas.length),

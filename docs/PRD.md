@@ -79,6 +79,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Mamadeira: volume em ml e tipo (leite materno ou fórmula). Os botões de volume acompanham a idade (até 1 mês: 20 a 90 ml; 1–3 meses: 60 a 150; 3–6 meses: 120 a 210; depois: 150 a 240) e sempre incluem o último volume usado; outros valores pelo formulário.
 - Refeição sólida (a partir de 6 meses): alimento, quantidade aproximada e aceitação.
 - Registro retroativo ("mamou às 14h por 15 min").
+- Água (2026-10-22, sugestão de uma mãe conhecida): só a partir dos 6 meses, porque antes disso a orientação (OMS e SBP) é não oferecer água. O botão "Refeição" do rodapé abre o painel "Comer e beber", com volumes prontos de água (30, 50, 100 e 150 ml, mais o último usado) e o atalho para a refeição. O cartão de alimentação mostra a água do dia; o histórico e o resumo para o pediatra também (média em ml por dia).
 
 **RF4. Sono**
 

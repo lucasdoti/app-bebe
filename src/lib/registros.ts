@@ -30,6 +30,7 @@ export type Registro =
   | (Base & { tipo: 'mamada'; detalhes: DetalhesMamada })
   | (Base & { tipo: 'mamadeira'; detalhes: DetalhesMamadeira })
   | (Base & { tipo: 'refeicao'; detalhes: DetalhesRefeicao })
+  | (Base & { tipo: 'agua'; detalhes: { ml: number } })
   | (Base & { tipo: 'sono'; detalhes: Record<string, never> })
   | (Base & { tipo: 'fralda'; detalhes: DetalhesFralda })
   | (Base & { tipo: 'contracao'; detalhes: Record<string, never> })
@@ -96,6 +97,8 @@ export function descricao(r: Registro, agora = Date.now()): { titulo: string; de
       ].filter(Boolean);
       return { titulo: 'Refeição', detalhe: [r.detalhes.alimento, ...extra].join(' · ') };
     }
+    case 'agua':
+      return { titulo: 'Água', detalhe: `${r.detalhes.ml} ml` };
     case 'sono':
       return {
         titulo: r.fim ? 'Sono' : 'Dormindo',
@@ -155,8 +158,13 @@ export function resumo(registros: Registro[], agora = Date.now()) {
     { tipo: 'fralda' }
   >[];
 
+  // Água de hoje (a partir dos 6 meses), em ml e vezes.
+  const aguaHoje = registros.filter((r) => r.tipo === 'agua' && ms(r.inicio) >= hoje) as Extract<Registro, { tipo: 'agua' }>[];
+
   return {
     ultimaAlimentacao,
+    aguaHojeMl: aguaHoje.reduce((t, r) => t + r.detalhes.ml, 0),
+    aguaHojeVezes: aguaHoje.length,
     peitoAtivo: peitoAtivo as Extract<Registro, { tipo: 'mamada' }> | null,
     dormindo,
     // Janela de vigília: desde o fim do último sono (sono de mais de 24h atrás não conta: faltou registrar).

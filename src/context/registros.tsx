@@ -33,6 +33,7 @@ type ValorRegistros = {
   trocarLado: (registro: Extract<Registro, { tipo: 'mamada' }>) => void;
   encerrar: (registro: Registro) => void;
   mamadeira: (ml: number, leite: Leite) => Registro | null;
+  agua: (ml: number) => Registro | null;
   iniciarSono: () => Registro | null;
   iniciarContracao: () => Registro | null;
   fralda: (d: DetalhesFralda) => Registro | null;
@@ -300,6 +301,10 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
       const agora = agoraISO();
       salvarPref('leite_preferido', leite);
       return criar({ tipo: 'mamadeira', inicio: agora, fim: agora, detalhes: { ml, leite } });
+    },
+    agua: (ml) => {
+      const agora = agoraISO();
+      return criar({ tipo: 'agua', inicio: agora, fim: agora, detalhes: { ml } });
     },
     iniciarSono: () => criar({ tipo: 'sono', inicio: agoraISO(), fim: null, detalhes: {} }),
     iniciarContracao: () => criar({ tipo: 'contracao', inicio: agoraISO(), fim: null, detalhes: {} }),
