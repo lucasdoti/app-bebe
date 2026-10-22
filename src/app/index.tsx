@@ -6,6 +6,7 @@ import { Pressable, Text, View } from 'react-native';
 import { AlertaSaude } from '@/components/alerta-saude';
 import { Folha } from '@/components/folha';
 import { InicioGestacao } from '@/components/inicio-gestacao';
+import { LinhaRegistro } from '@/components/linha-registro';
 import { BotaoRegistro, CartaoResumo, SeletorBebe, type NomeIcone } from '@/components/home';
 import { Botao, BotaoIcone, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes } from '@/context/bebes';
@@ -28,7 +29,6 @@ import {
   ladoAtual,
   ladoSugerido,
   nomeLado,
-  observacaoDe,
   resumo,
   temposPorLado,
   type Lado,
@@ -39,7 +39,7 @@ import {
 import { mediaSono, preverSono } from '@/lib/sono';
 import { lerPref } from '@/lib/storage';
 import { cronometro, duracao, haQuanto, horaCurta, HORA } from '@/lib/tempo';
-import { ALVO_TOQUE, fontes, type Paleta } from '@/theme/cores';
+import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
 type Painel = 'mamada' | 'fralda' | 'anterior' | null;
@@ -57,32 +57,6 @@ function volumesPara(idadeMeses: number, ultimo: number | null) {
           ? [120, 150, 180, 210]
           : [150, 180, 210, 240];
   return ultimo && !base.includes(ultimo) ? [...base, ultimo].sort((a, b) => a - b) : base;
-}
-
-function corDoTipo(t: Tipo, cores: Paleta) {
-  const mapa: Record<Tipo, string> = {
-    mamada: cores.mamada,
-    mamadeira: cores.mamada,
-    refeicao: cores.mamada,
-    sono: cores.sono,
-    fralda: cores.fralda,
-    contracao: cores.mamada,
-    movimentos: cores.sono,
-    dose: cores.medidas,
-    febre: cores.fralda,
-  };
-  return mapa[t];
-}
-
-function iconeDoTipo(r: Registro): NomeIcone {
-  if (r.tipo === 'refeicao') return 'food-apple-outline';
-  if (r.tipo === 'sono') return 'sleep';
-  if (r.tipo === 'contracao') return 'timer-outline';
-  if (r.tipo === 'movimentos') return 'gesture-tap';
-  if (r.tipo === 'dose') return 'pill';
-  if (r.tipo === 'febre') return 'thermometer';
-  if (r.tipo === 'fralda') return r.detalhes.penico ? 'toilet' : 'human-baby-changing-table';
-  return 'baby-bottle-outline';
 }
 
 const abrirRegistro = (id: string) => router.push({ pathname: '/registro/[id]', params: { id } });
@@ -486,50 +460,16 @@ export default function Inicio() {
       <Cartao>
         <Texto variante="subtitulo">Últimas 24h</Texto>
         {ultimas24h.length === 0 && <Texto variante="suave">Nenhum registro nas últimas 24 horas.</Texto>}
-        {ultimas24h.map((x) => {
-          const d = descricao(x, agora);
-          return (
-            <Pressable
-              key={x.id}
-              accessibilityRole="button"
-              onPress={() => abrirRegistro(x.id)}
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-                minHeight: ALVO_TOQUE,
-                opacity: pressed ? 0.7 : 1,
-              })}>
-              <Text style={{ width: 48, fontFamily: fontes.negrito, fontSize: 15, color: cores.textoSuave }}>
-                {horaCurta(x.inicio)}
-              </Text>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: corDoTipo(x.tipo, cores),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <MaterialCommunityIcons name={iconeDoTipo(x)} size={20} color={cores.textoNaPrimaria} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Texto style={{ fontFamily: fontes.negrito }}>
-                  {d.titulo}
-                  {x.fim === null && x.tipo !== 'sono' ? ' (agora)' : ''}
-                </Texto>
-                <Texto variante="suave">{[d.detalhe, `por ${nomeAutor(x.autor_id)}`].filter(Boolean).join(' · ')}</Texto>
-                {observacaoDe(x) && (
-                  <Texto variante="suave" numberOfLines={2} style={{ fontStyle: 'italic' }}>
-                    “{observacaoDe(x)}”
-                  </Texto>
-                )}
-              </View>
-            </Pressable>
-          );
-        })}
+        {ultimas24h.map((x) => (
+          <LinhaRegistro key={x.id} registro={x} agora={agora} autor={nomeAutor(x.autor_id)} />
+        ))}
         <Botao titulo="Registrar algo que já passou" variante="secundario" onPress={() => setPainel('anterior')} />
+        <Botao
+          titulo="Ver histórico"
+          variante="texto"
+          onPress={() => router.push('/historico')}
+          icone={<MaterialCommunityIcons name="calendar-month-outline" size={20} color={cores.texto} />}
+        />
       </Cartao>
 
       <Botao titulo="Resumo para o pediatra" variante="secundario" onPress={() => router.push('/resumo')} />

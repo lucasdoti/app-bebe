@@ -107,9 +107,9 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 **RF8. Histórico e resumo**
 
 - Histórico filtrável por tipo e dia.
+- Feito (2026-10-22): tela "Histórico", aberta pelo cartão "Últimas 24h" da home. Calendário do mês (domingo a sábado) com um ponto colorido por tipo registrado em cada dia (alimentação, sono, fralda, remédio e febre, gestação); tocar no dia mostra o resumo dele (mamadas, horas de sono, fraldas...) e todos os registros em ordem, que abrem a edição. Filtro por tipo. Os meses antigos vêm do servidor ao abrir (precisa de internet); o aparelho continua guardando só os últimos 8 dias.
 - Resumo de 7 dias para o pediatra: médias de mamadas, sono e fraldas e última medida.
-- Feito (2026-10-10): tela "Resumo para a consulta", compartilhável pelo WhatsApp. Para o pediatra: médias dos últimos 7 dias completos (mamadas, peito, mamadeira, sono, fraldas, febre), crescimento com percentil da OMS, remédios em uso, vacinas e perguntas (guardadas no aparelho). Na gestação: semana, peso e pressão da mãe, últimos ultrassons e exames, vacinas da gestação e as perguntas anotadas na próxima consulta. O histórico filtrável ainda falta.
-
+- Feito (2026-10-10): tela "Resumo para a consulta", compartilhável pelo WhatsApp. Para o pediatra: médias dos últimos 7 dias completos (mamadas, peito, mamadeira, sono, fraldas, febre), crescimento com percentil da OMS, remédios em uso, vacinas e perguntas (guardadas no aparelho). Na gestação: semana, peso e pressão da mãe, últimos ultrassons e exames, vacinas da gestação e as perguntas anotadas na próxima consulta.
 **RF9. Remédios e febre**
 
 - Cadastro do remédio: nome, dose, intervalo em horas e duração do tratamento em dias.

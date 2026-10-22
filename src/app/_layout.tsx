@@ -108,6 +108,7 @@ function Rotas() {
           <Stack.Screen name="plano-parto" />
           <Stack.Screen name="resumo" />
           <Stack.Screen name="sono" />
+          <Stack.Screen name="historico" />
           <Stack.Screen name="gastos" />
           <Stack.Screen name="gasto/[id]" />
           <Stack.Screen name="saude/index" />

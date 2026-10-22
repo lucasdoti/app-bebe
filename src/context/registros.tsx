@@ -24,6 +24,8 @@ type ValorRegistros = {
   /** Registros do bebê selecionado, do mais recente para o mais antigo. */
   doBebe: Registro[];
   pendentes: number;
+  /** Traz do servidor os registros do bebê selecionado no período (para o histórico). Falso se sem internet. */
+  carregarPeriodo: (desde: Date, ate: Date) => Promise<boolean>;
   criar: (novo: NovoRegistro) => Registro | null;
   atualizar: (id: string, mudancas: Partial<Pick<Registro, 'inicio' | 'fim' | 'detalhes'>>) => void;
   excluir: (id: string) => void;
@@ -43,6 +45,7 @@ const CAMPOS = 'id, bebe_id, autor_id, tipo, inicio, fim, detalhes';
 
 const ordenar = (lista: Registro[]) => [...lista].sort((a, b) => b.inicio.localeCompare(a.inicio));
 const agoraISO = () => new Date().toISOString();
+const inicioDaJanela = () => new Date(Date.now() - DIAS_CARREGADOS * 24 * 3600_000).toISOString();
 
 function aplicar(lista: Registro[], op: Operacao): Registro[] {
   switch (op.op) {
@@ -90,8 +93,11 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
     setRegistros(cache ? JSON.parse(cache) : []);
   }, [chaveCache, chaveFila]);
 
+  // O aparelho guarda só os últimos dias; meses antigos abertos no histórico ficam só na memória.
   useEffect(() => {
-    if (chaveCache) salvarPref(chaveCache, JSON.stringify(registros));
+    if (!chaveCache) return;
+    const desde = inicioDaJanela();
+    salvarPref(chaveCache, JSON.stringify(registros.filter((r) => r.fim === null || r.inicio >= desde)));
   }, [chaveCache, registros]);
 
   const guardarFila = useCallback(
@@ -136,7 +142,7 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
       if (familiaId) setCarregadoPara(familiaId);
       return;
     }
-    const desde = new Date(Date.now() - DIAS_CARREGADOS * 24 * 3600_000).toISOString();
+    const desde = inicioDaJanela();
     const { data, error } = await supabase
       .from('registros')
       .select(CAMPOS)
@@ -145,10 +151,50 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
       .order('inicio', { ascending: false });
     if (!error) {
       const doServidor = (data as Registro[]).map(normalizar);
-      setRegistros(ordenar(filaRef.current.reduce(aplicar, doServidor)));
+      const ids = new Set(doServidor.map((r) => r.id));
+      // Mantém o que o histórico trouxe de antes da janela.
+      setRegistros((l) =>
+        ordenar(
+          filaRef.current.reduce(aplicar, [
+            ...doServidor,
+            ...l.filter((r) => r.fim !== null && r.inicio < desde && !ids.has(r.id)),
+          ]),
+        ),
+      );
     }
     setCarregadoPara(familiaId);
   }, [familiaId, idsBebes]);
+
+  const bebeId = bebeAtual?.id ?? null;
+  const carregarPeriodo = useCallback(
+    async (inicio: Date, fim: Date) => {
+      if (!bebeId) return false;
+      const de = inicio.toISOString();
+      const ate = fim.toISOString();
+      const { data, error } = await supabase
+        .from('registros')
+        .select(CAMPOS)
+        .eq('bebe_id', bebeId)
+        .gte('inicio', de)
+        .lt('inicio', ate)
+        .order('inicio', { ascending: false })
+        .limit(3000);
+      if (error) return false;
+      const doServidor = (data as Registro[]).map(normalizar);
+      const ids = new Set(doServidor.map((r) => r.id));
+      // O servidor manda no período (some o que foi apagado no outro celular); a fila é reaplicada por cima.
+      setRegistros((l) =>
+        ordenar(
+          filaRef.current.reduce(aplicar, [
+            ...doServidor,
+            ...l.filter((r) => !ids.has(r.id) && !(r.bebe_id === bebeId && r.inicio >= de && r.inicio < ate)),
+          ]),
+        ),
+      );
+      return true;
+    },
+    [bebeId],
+  );
 
   useEffect(() => {
     enviarFila().then(recarregar);
@@ -227,6 +273,7 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
     carregando: !!familiaId && carregadoPara !== familiaId,
     doBebe,
     pendentes: fila.length,
+    carregarPeriodo,
     criar,
     atualizar,
     excluir,
