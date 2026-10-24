@@ -47,7 +47,7 @@ const LISTA: Record<number, [Area, string][]> = {
     ['social', 'Olha para um rosto'],
     ['fala', 'Reage a sons (se assusta, para de chorar)'],
     ['movimento', 'De bruços, levanta a cabeça por um instante'],
-    ['maos', 'Mantém braços e pernas dobrados'],
+    ['maos', 'Segura o dedo quando encosta na mão dele'],
   ],
   2: [
     ['social', 'Sorri quando conversam com ele'],

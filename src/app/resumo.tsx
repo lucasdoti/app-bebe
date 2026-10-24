@@ -15,7 +15,7 @@ import { useSaude } from '@/context/saude';
 import { useVacinas } from '@/context/vacinas';
 import { idadeEmDias, percentil, percentilTexto, pontosDe, type Indicador } from '@/lib/crescimento';
 import { denteDoCodigo, nomeDente } from '@/lib/dentes';
-import { DESENVOLVIMENTO, esperadoAte } from '@/lib/marcos';
+import { DESENVOLVIMENTO, esperadoAte, faixaAtual, FAIXAS } from '@/lib/marcos';
 import { idadeGestacional, idadeGestacionalNaData, pesoTexto, semanasTexto } from '@/lib/gestacao';
 import { deISO, hojeISO, idade, idadeTexto } from '@/lib/idade';
 import { numeroBR, resumoDaSemana } from '@/lib/resumo';
@@ -153,7 +153,11 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
     const tresMeses = hojeISO(new Date(Date.now() - 92 * 86_400_000));
     const marcados = new Set(marcos.map((m) => m.codigo));
     const recentes = marcos.filter((m) => m.tipo === 'desenvolvimento' && m.data >= tresMeses);
-    const faltam = DESENVOLVIMENTO.filter((d) => meses >= esperadoAte(d.faixa) && !marcados.has(d.codigo));
+    // Só a fase imediatamente anterior (as mais antigas podem só não ter sido anotadas).
+    const anterior = FAIXAS[FAIXAS.indexOf(faixaAtual(meses)) - 1];
+    const faltam = DESENVOLVIMENTO.filter(
+      (d) => d.faixa === anterior && meses >= esperadoAte(d.faixa) && !marcados.has(d.codigo),
+    );
     const linhas = [
       ...recentes.map((m) => `${deISO(m.data)}: ${m.titulo}`),
       ...(faltam.length ? [`Ainda não observados (esperados até esta idade): ${faltam.map((d) => d.titulo.toLowerCase()).join('; ')}`] : []),

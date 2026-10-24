@@ -174,9 +174,13 @@ export default function Marcos() {
   const atual = faixaAtual(meses);
   const proxima = FAIXAS[FAIXAS.indexOf(atual) + 1];
   const daFaixa = (f: number) => DESENVOLVIMENTO.filter((d) => d.faixa === f);
-  // Passaram da idade em que costumam aparecer e ainda não foram marcados.
-  const paraComentar = DESENVOLVIMENTO.filter((d) => meses >= esperadoAte(d.faixa) && !porCodigo.has(d.codigo));
-  const anteriores = FAIXAS.filter((f) => f < atual);
+  // Só a fase imediatamente anterior: costumam aparecer até agora e ainda não foram marcados.
+  // As mais antigas ficam em "fases anteriores" (quem começou a usar o app depois não é alarmado).
+  const anterior = FAIXAS[FAIXAS.indexOf(atual) - 1];
+  const paraComentar = anterior
+    ? daFaixa(anterior).filter((d) => meses >= esperadoAte(d.faixa) && !porCodigo.has(d.codigo))
+    : [];
+  const anteriores = FAIXAS.filter((f) => f < atual && daFaixa(f).some((d) => !paraComentar.includes(d)));
 
   const item = (d: MarcoDesenvolvimento) => {
     const m = porCodigo.get(d.codigo);
