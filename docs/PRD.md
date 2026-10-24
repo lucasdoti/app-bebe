@@ -248,6 +248,15 @@ Pedido de uma mãe conhecida (2026-10-22). Sem fotos, por privacidade da famíli
 - O resumo para o pediatra mostra quantos dentes, o primeiro e o último.
 - Tabela `dentes` (bebe_id, codigo do dente, nasceu_em, observacao), isolada por família via RLS.
 
+## Marcos
+
+Antecipado da V2 em 2026-10-24, sem fotos (privacidade da família). Tela "Marcos" na aba Bebê, com duas partes:
+
+- **Primeiras vezes:** lista sugerida (sorriso, risada, rolou, papinha, sentou, engatinhou, "mamã", "papá", tchau, primeira palavra, primeiros passos, banho de mar, viagem, corte de cabelo) e marcos livres. Cada um com data, idade calculada e observação (na primeira palavra, "qual palavra?"). O primeiro dente vem dos Dentinhos. A linha do tempo pode ser mandada pelo WhatsApp para a família.
+- **Desenvolvimento:** os quatro marcos de cada faixa da Caderneta da Criança (1, 2, 4, 6, 9, 12, 15, 18, 24, 30 e 36 meses: social, mãos, fala e movimento), com texto adaptado. Mostra a fase atual e a próxima; marcos que passaram da faixa seguinte sem ser marcados aparecem, sem alarme, em "Para comentar na próxima consulta".
+- No dia de um marco, a home mostra um cartão "Hoje"; o histórico mostra o marco no dia (estrelinha no calendário); o resumo para o pediatra lista os marcos de desenvolvimento dos últimos 3 meses e os ainda não observados.
+- Tabela `marcos` (tipo, código do marco sugerido, título, data, detalhe), isolada por família via RLS.
+
 ## V2 e backlog
 
 A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.
@@ -257,8 +266,8 @@ A V2 traz fotos e marcos; o resto fica no backlog até a V1 provar uso.
 | Vacinas com calendário do SUS | ~~V2~~ V1 | Antecipado em 2026-10-10: veja "Vacinas" |
 | Lembrete de vacina por notificação | ~~Backlog~~ Feito | 2026-10-20: veja RF10 |
 | Chá de bebê: lista de presentes com reserva | ~~Backlog~~ Feito | Ver "Chá de bebê" na seção Gestação |
-| Fotos e álbum de marcos | V2 | Custo de armazenamento (Supabase Storage) |
-| Marcos do desenvolvimento (sorriu, sentou, andou) | V2 | Combina com o álbum |
+| Fotos e álbum de marcos | V2 | Marcos sem foto feitos em 2026-10-24; fotos seguem fora por privacidade e custo |
+| Marcos do desenvolvimento (sorriu, sentou, andou) | ~~V2~~ Feito | Ver "Marcos" |
 | Guarda-roupa do bebê (sugestão com as peças reais) | Backlog | Precisa de cadastro de peças |
 | Previsão do próximo sono | ~~Backlog~~ V1 | Antecipada em 2026-10-14: veja "Relógio do sono" no RF4 |
 | Previsão da próxima mamada | Backlog | Exige histórico de algumas semanas |

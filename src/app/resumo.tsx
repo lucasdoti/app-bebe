@@ -6,6 +6,7 @@ import { Linking, Platform, Share, View } from 'react-native';
 import { Aviso, Botao, Cabecalho, Campo, Cartao, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes, type Bebe, type BebeNascido } from '@/context/bebes';
 import { useDentes } from '@/context/dentes';
+import { useMarcos } from '@/context/marcos';
 import { useGestacao } from '@/context/gestacao';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
@@ -14,8 +15,9 @@ import { useSaude } from '@/context/saude';
 import { useVacinas } from '@/context/vacinas';
 import { idadeEmDias, percentil, percentilTexto, pontosDe, type Indicador } from '@/lib/crescimento';
 import { denteDoCodigo, nomeDente } from '@/lib/dentes';
+import { DESENVOLVIMENTO, esperadoAte } from '@/lib/marcos';
 import { idadeGestacional, idadeGestacionalNaData, pesoTexto, semanasTexto } from '@/lib/gestacao';
-import { deISO, hojeISO, idadeTexto } from '@/lib/idade';
+import { deISO, hojeISO, idade, idadeTexto } from '@/lib/idade';
 import { numeroBR, resumoDaSemana } from '@/lib/resumo';
 import { nomeStatus } from '@/lib/saude';
 import { lerPref, salvarPref } from '@/lib/storage';
@@ -97,6 +99,7 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
   const { aplicadas } = useVacinas();
   const saude = useSaude();
   const { dentes } = useDentes();
+  const { marcos } = useMarcos();
   const r = resumoDaSemana(doBebe, 7);
 
   const rotina = [
@@ -144,6 +147,19 @@ function useSecoesBebe(bebe: BebeNascido, perguntas: string): Secao[] {
   if (atencao.length) secoes.push({ titulo: '⚠️ Atenção', linhas: atencao });
   secoes.push({ titulo: `Rotina (média dos últimos ${r.dias} dias)`, linhas: rotina });
   if (crescimento.length) secoes.push({ titulo: 'Crescimento', linhas: crescimento });
+  {
+    // Desenvolvimento: marcos dos últimos 3 meses e os que passaram da idade esperada sem ser marcados.
+    const meses = idade(bebe.nascimento).meses;
+    const tresMeses = hojeISO(new Date(Date.now() - 92 * 86_400_000));
+    const marcados = new Set(marcos.map((m) => m.codigo));
+    const recentes = marcos.filter((m) => m.tipo === 'desenvolvimento' && m.data >= tresMeses);
+    const faltam = DESENVOLVIMENTO.filter((d) => meses >= esperadoAte(d.faixa) && !marcados.has(d.codigo));
+    const linhas = [
+      ...recentes.map((m) => `${deISO(m.data)}: ${m.titulo}`),
+      ...(faltam.length ? [`Ainda não observados (esperados até esta idade): ${faltam.map((d) => d.titulo.toLowerCase()).join('; ')}`] : []),
+    ];
+    if (linhas.length) secoes.push({ titulo: 'Desenvolvimento', linhas });
+  }
   if (dentes.length) {
     const ultimo = dentes.at(-1)!;
     const d = denteDoCodigo(ultimo.codigo);

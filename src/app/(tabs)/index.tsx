@@ -11,6 +11,7 @@ import { BotaoRegistro, CartaoResumo, SeletorBebe, type NomeIcone } from '@/comp
 import { Botao, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes } from '@/context/bebes';
 import { useClima } from '@/context/clima';
+import { useMarcos } from '@/context/marcos';
 import { useMedidas } from '@/context/medidas';
 import { useRegistros } from '@/context/registros';
 import { useRemedios } from '@/context/remedios';
@@ -23,7 +24,7 @@ import { useSugestao } from '@/hooks/use-sugestao';
 import { descricaoTempo } from '@/lib/clima';
 import { formatar } from '@/components/grafico-crescimento';
 import { percentil, percentilTexto, pontosDe } from '@/lib/crescimento';
-import { deISO, fase, idade, idadeTexto, type Fase } from '@/lib/idade';
+import { deISO, fase, hojeISO, idade, idadeTexto, type Fase } from '@/lib/idade';
 import {
   descricao,
   ladoAtual,
@@ -73,6 +74,7 @@ export default function Inicio() {
   const { bebes, bebeAtual, escolherBebe, carregando } = useBebes();
   const reg = useRegistros();
   const med = useMedidas();
+  const { marcos } = useMarcos();
   const { clima: tempoAgora } = useClima();
   const roupa = useRoupa();
   const sugestaoCasa = useSugestao('casa', 'carrinho', null);
@@ -441,6 +443,21 @@ export default function Inicio() {
       </View>
 
       <AlertaSaude />
+
+      {/* Marco de hoje: some no dia seguinte. */}
+      {marcos
+        .filter((m) => m.data === hojeISO())
+        .map((m) => (
+          <CartaoResumo
+            key={m.id}
+            cor={cores.sono}
+            icone="star-outline"
+            titulo="Hoje"
+            valor={m.titulo}
+            detalhe={m.detalhe ?? 'Anotado nos marcos'}
+            onPress={() => router.push('/marcos')}
+          />
+        ))}
 
       {roupa.perguntas(bebeAtual.id).slice(0, 1).map((p) => (
         <PerguntaRoupa

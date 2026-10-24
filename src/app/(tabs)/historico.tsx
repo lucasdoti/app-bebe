@@ -7,6 +7,7 @@ import { Folha } from '@/components/folha';
 import { LinhaRegistro } from '@/components/linha-registro';
 import { Aviso, Botao, Cabecalho, Cartao, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes } from '@/context/bebes';
+import { useMarcos } from '@/context/marcos';
 import { useRegistros } from '@/context/registros';
 import { useSessao } from '@/context/sessao';
 import { useAgora } from '@/hooks/use-agora';
@@ -60,6 +61,8 @@ export default function Historico() {
   const { bebeAtual } = useBebes();
   const { membros } = useSessao();
   const reg = useRegistros();
+  const { marcos } = useMarcos();
+  const diasComMarco = new Set(marcos.map((m) => m.data));
   const { cores } = useTema();
   const agora = useAgora(60_000);
   const hoje = inicioDoDia(new Date(agora));
@@ -110,6 +113,7 @@ export default function Historico() {
   const passa = (r: Registro) => filtro === 'todos' || grupoDe(r.tipo) === filtro;
 
   const doDiaEscolhido = (porDia.get(chaveDia(dia)) ?? []).filter(passa);
+  const marcosDoDia = filtro === 'todos' ? marcos.filter((m) => m.data === hojeISO(dia)) : [];
   const sono = filtro === 'todos' || filtro === 'sono' ? doDia(reg.doBebe, diasAtras(dia, hoje), agora).total : 0;
   const resumo = resumoDoDia(doDiaEscolhido, sono);
   // Tipos que dá para registrar depois, conforme a fase (refeição e água a partir dos 6 meses).
@@ -222,6 +226,9 @@ export default function Historico() {
                         }}
                       />
                     ))}
+                    {filtro === 'todos' && diasComMarco.has(hojeISO(d)) && (
+                      <MaterialCommunityIcons name="star" size={8} color={escolhido ? cores.textoNaPrimaria : cores.texto} />
+                    )}
                   </View>
                 </View>
               </Pressable>
@@ -275,7 +282,22 @@ export default function Historico() {
       <Cartao>
         <Texto variante="subtitulo">{tituloDia.charAt(0).toUpperCase() + tituloDia.slice(1)}</Texto>
         {resumo ? <Texto variante="suave">{resumo}</Texto> : null}
-        {doDiaEscolhido.length === 0 && (
+        {marcosDoDia.map((m) => (
+          <Pressable
+            key={m.id}
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/marcos', params: { aba: m.tipo === 'primeira' ? 'primeiras' : 'desenvolvimento' } })}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: ALVO_TOQUE, opacity: pressed ? 0.7 : 1 })}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: cores.sono, alignItems: 'center', justifyContent: 'center' }}>
+              <MaterialCommunityIcons name="star-outline" size={20} color={cores.textoNaPrimaria} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Texto style={{ fontFamily: fontes.negrito }}>{m.titulo}</Texto>
+              <Texto variante="suave">{m.tipo === 'primeira' ? 'Primeira vez' : 'Marco do desenvolvimento'}</Texto>
+            </View>
+          </Pressable>
+        ))}
+        {doDiaEscolhido.length === 0 && marcosDoDia.length === 0 && (
           <Texto variante="suave">{carregando ? 'Carregando…' : 'Nada registrado neste dia.'}</Texto>
         )}
         {[...doDiaEscolhido].reverse().map((x) => (

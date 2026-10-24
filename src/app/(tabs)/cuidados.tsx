@@ -2,6 +2,7 @@ import { GrupoMenu, ItemMenu } from '@/components/menu';
 import { Cabecalho, Tela, Texto } from '@/components/ui';
 import { nasceu, useBebes } from '@/context/bebes';
 import { useDentes } from '@/context/dentes';
+import { useMarcos } from '@/context/marcos';
 import { useRegistros } from '@/context/registros';
 import { deISO, idade, idadeTexto } from '@/lib/idade';
 import { doDia } from '@/lib/sono';
@@ -13,10 +14,12 @@ export default function Cuidados() {
   const { bebeAtual } = useBebes();
   const { doBebe } = useRegistros();
   const { dentes } = useDentes();
+  const { marcos } = useMarcos();
   const { cores } = useTema();
   if (!nasceu(bebeAtual)) return null;
 
   const sonoHoje = doDia(doBebe, 0).total;
+  const primeiras = marcos.filter((m) => m.tipo === 'primeira').length;
 
   return (
     <Tela>
@@ -32,6 +35,18 @@ export default function Cuidados() {
           href="/sono"
         />
         <ItemMenu cor={cores.clima} icone="tshirt-crew-outline" titulo="Clima e roupa" detalhe="Que roupa vestir hoje" href="/roupa" />
+      </GrupoMenu>
+
+      <GrupoMenu titulo="Desenvolvimento">
+        <ItemMenu
+          cor={cores.sono}
+          icone="star-outline"
+          titulo="Marcos"
+          detalhe={
+            primeiras ? `${primeiras} primeiras vezes · última: ${marcos.filter((m) => m.tipo === 'primeira').at(-1)!.titulo.toLowerCase()}` : 'Primeiras vezes e marcos da Caderneta'
+          }
+          href="/marcos"
+        />
       </GrupoMenu>
 
       <GrupoMenu titulo="Saúde">
