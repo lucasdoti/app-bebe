@@ -15,17 +15,19 @@ import {
   textoDoQueFalta,
   useEnxoval,
   type Categoria,
+  type Gasto,
   type ItemEnxoval,
   type Tamanho,
 } from '@/context/enxoval';
 import { confirmar } from '@/lib/confirmar';
 import { reais } from '@/lib/dinheiro';
+import { deISO, hojeISO } from '@/lib/idade';
 import { linkSeguro, normalizarLink, siteDoLink } from '@/lib/links';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
 import { ALVO_TOQUE, fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 
-type Aba = 'temos' | 'falta';
+type Aba = 'temos' | 'falta' | 'presentes';
 type Prioridade = ItemEnxoval['prioridade'];
 
 // Botões em várias linhas (as categorias não cabem lado a lado).
@@ -99,13 +101,16 @@ export default function Enxoval() {
   const reservasDo = (item: ItemEnxoval) => reservas.filter((r) => r.item_id === item.id);
   const { aba: abaParam } = useLocalSearchParams<{ aba?: Aba }>();
   const { cores } = useTema();
-  const [aba, setAba] = useState<Aba>(abaParam === 'falta' ? 'falta' : 'temos');
+  const [aba, setAba] = useState<Aba>(abaParam === 'falta' || abaParam === 'presentes' ? abaParam : 'temos');
   const [categoria, setCategoria] = useState<Categoria>('roupa');
   const [nome, setNome] = useState('');
   const [tamanho, setTamanho] = useState<Tamanho | null>('RN');
   const [quantidade, setQuantidade] = useState(1);
   const [prioridade, setPrioridade] = useState<Prioridade>(null);
   const [link, setLink] = useState('');
+  // Cadastro no "Já temos": se foi presente, quem deu (vira também um presente nos gastos).
+  const [foiPresente, setFoiPresente] = useState(false);
+  const [quemDeu, setQuemDeu] = useState('');
   const [editandoLink, setEditandoLink] = useState<ItemEnxoval | null>(null);
   const [textoLink, setTextoLink] = useState('');
   const [conseguindo, setConseguindo] = useState<ItemEnxoval | null>(null);
@@ -122,6 +127,9 @@ export default function Enxoval() {
   const roupas = itens.filter((i) => i.categoria === 'roupa').reduce((s, i) => s + i.quantidade, 0);
   const especiais = itens.filter((i) => i.categoria === 'especial').reduce((s, i) => s + i.quantidade, 0);
   const gastoTotal = gastos.filter((g) => g.tipo === 'compra').reduce((s, g) => s + (g.valor ?? 0), 0);
+  const presentes = gastos.filter((g) => g.tipo === 'presente');
+  // Nomes já usados, para escolher com um toque (os mais recentes primeiro).
+  const quemJaDeu = [...new Set([...presentes].reverse().map((g) => g.quem_deu!.trim()))].slice(0, 8);
 
   async function executar(acao: PromiseLike<{ error: { message: string } | null }>) {
     setErro(null);
@@ -140,9 +148,11 @@ export default function Enxoval() {
     const t = ehRoupa ? tamanho : null;
     const linkOk = falta ? normalizarLink(link) : null;
     if (falta && link.trim() && !linkOk) return setErro('Esse link não parece válido. Copie o endereço da página do produto.');
+    const presenteDe = !falta && foiPresente ? quemDeu.trim().replace(/\s+/g, ' ').slice(0, 80) : '';
+    if (!falta && foiPresente && !presenteDe) return setErro('Quem deu o presente?');
     // O mesmo item no mesmo tamanho soma na quantidade em vez de repetir a linha.
     const igual = igualEm(lista, categoria, n, t);
-    await executar(
+    const ok = await executar(
       igual
         ? supabase
             .from('enxoval_itens')
@@ -163,10 +173,29 @@ export default function Enxoval() {
             link: linkOk,
           }),
     );
+    if (!ok) return;
+    // Presente: o item fica no enxoval como qualquer outro e também entra na lista de presentes.
+    if (presenteDe)
+      await executar(
+        supabase.from('enxoval_gastos').insert({
+          bebe_id: bebeAtual!.id,
+          tipo: 'presente',
+          descricao: `${quantidade} ${n}${t ? ` ${t}` : ''}`,
+          data: hojeISO(),
+          categoria,
+          quem_deu: presenteDe,
+        }),
+      );
     setLink('');
-    setAviso(`${quantidade} ${n}${t ? ` ${t}` : ''} ${igual ? 'somado à lista' : falta ? 'na lista do que falta' : 'adicionado'}.`);
+    setAviso(
+      `${quantidade} ${n}${t ? ` ${t}` : ''} ${igual ? 'somado à lista' : falta ? 'na lista do que falta' : 'adicionado'}${
+        presenteDe ? ` · presente de ${presenteDe}` : ''
+      }.`,
+    );
     setNome('');
     setQuantidade(1);
+    setFoiPresente(false);
+    setQuemDeu('');
   }
 
   function mudar(item: ItemEnxoval, delta: number) {
@@ -267,8 +296,9 @@ export default function Enxoval() {
       <Escolha<Aba>
         rotulo="Lista"
         opcoes={[
-          { valor: 'temos', titulo: `Já temos (${itens.reduce((s, i) => s + i.quantidade, 0)})` },
-          { valor: 'falta', titulo: `Falta (${faltam.reduce((s, i) => s + i.quantidade, 0)})` },
+          { valor: 'temos', titulo: 'Já temos' },
+          { valor: 'falta', titulo: 'Falta' },
+          { valor: 'presentes', titulo: 'Presentes' },
         ]}
         valor={aba}
         onChange={(a) => {
@@ -278,6 +308,10 @@ export default function Enxoval() {
         }}
       />
 
+      {aba === 'presentes' ? (
+        <ListaPresentes presentes={presentes} onErro={setErro} recarregar={recarregar} />
+      ) : (
+      <>
       <Cartao>
         <Texto variante="subtitulo">
           {falta
@@ -354,6 +388,23 @@ export default function Enxoval() {
           </Text>
           <BotaoQtd icone="plus" rotulo="Aumentar" onPress={() => setQuantidade(quantidade + 1)} />
         </View>
+        {!falta && (
+          <Escolha<'nos' | 'presente'>
+            rotulo="Como chegou"
+            opcoes={[
+              { valor: 'nos', titulo: 'Nós compramos' },
+              { valor: 'presente', titulo: 'Foi presente' },
+            ]}
+            valor={foiPresente ? 'presente' : 'nos'}
+            onChange={(v) => setFoiPresente(v === 'presente')}
+          />
+        )}
+        {!falta && foiPresente && (
+          <>
+            <Campo rotulo="Quem deu?" value={quemDeu} onChangeText={setQuemDeu} placeholder="Ex.: Vó Maria" maxLength={80} />
+            {quemJaDeu.length > 0 && <Chips opcoes={quemJaDeu.map((q) => ({ valor: q, titulo: q }))} valor={quemDeu} onChange={setQuemDeu} />}
+          </>
+        )}
         {falta && (
           <Escolha<'essencial' | 'bom'>
             rotulo="Prioridade (opcional)"
@@ -488,6 +539,9 @@ export default function Enxoval() {
             : 'Comece pelas roupas: escolha o item, o tamanho e a quantidade.'}
         </Texto>
       )}
+      </>
+      )}
+      {aba === 'presentes' && <Aviso texto={erro} />}
 
       <Folha
         aberta={!!editandoLink}
@@ -558,5 +612,94 @@ export default function Enxoval() {
         )}
       </Folha>
     </Tela>
+  );
+}
+
+// Aba "Presentes": quem deu o quê (cadastrados no enxoval ou nos gastos), com o "já agradecemos" por pessoa.
+function ListaPresentes({
+  presentes,
+  onErro,
+  recarregar,
+}: {
+  presentes: Gasto[];
+  onErro: (e: string | null) => void;
+  recarregar: () => Promise<void>;
+}) {
+  const { cores } = useTema();
+  // Agrupa por pessoa (sem diferenciar maiúsculas), da mais recente para a mais antiga.
+  const porPessoa = new Map<string, Gasto[]>();
+  for (const g of [...presentes].sort((a, b) => b.data.localeCompare(a.data))) {
+    const chave = g.quem_deu!.trim().toLowerCase();
+    porPessoa.set(chave, [...(porPessoa.get(chave) ?? []), g]);
+  }
+  const faltaAgradecer = [...porPessoa.values()].filter((gs) => gs.some((g) => !g.agradecido)).length;
+
+  async function agradecer(gs: Gasto[]) {
+    onErro(null);
+    const todos = gs.every((g) => g.agradecido);
+    const { error } = await supabase
+      .from('enxoval_gastos')
+      .update({ agradecido: !todos })
+      .in(
+        'id',
+        gs.map((g) => g.id),
+      );
+    if (error) onErro(mensagemDeErro(error));
+    await recarregar();
+  }
+
+  return (
+    <>
+      <Cartao>
+        <Texto variante="subtitulo">
+          {presentes.length
+            ? `${presentes.length} ${presentes.length === 1 ? 'presente' : 'presentes'} de ${porPessoa.size} ${porPessoa.size === 1 ? 'pessoa' : 'pessoas'}`
+            : 'Nenhum presente anotado ainda'}
+        </Texto>
+        <Texto variante="suave">
+          {presentes.length
+            ? faltaAgradecer
+              ? `Falta agradecer ${faltaAgradecer} ${faltaAgradecer === 1 ? 'pessoa' : 'pessoas'}.`
+              : 'Todo mundo agradecido.'
+            : 'Ao adicionar algo no "Já temos", marque "Foi presente" e escreva quem deu. Ele continua no enxoval normalmente.'}
+        </Texto>
+        <Botao
+          titulo="Anotar presente"
+          variante="secundario"
+          onPress={() => router.push({ pathname: '/gasto/[id]', params: { id: 'novo', tipo: 'presente' } })}
+          icone={<MaterialCommunityIcons name="gift-outline" size={20} color={cores.texto} />}
+        />
+      </Cartao>
+
+      {[...porPessoa.values()].map((gs) => {
+        const todos = gs.every((g) => g.agradecido);
+        return (
+          <Cartao key={gs[0].quem_deu!.trim().toLowerCase()}>
+            <Texto variante="subtitulo">{gs[0].quem_deu}</Texto>
+            {gs.map((g) => (
+              <Pressable
+                key={g.id}
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: '/gasto/[id]', params: { id: g.id } })}
+                style={({ pressed }) => ({ minHeight: ALVO_TOQUE, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                <Texto style={{ fontFamily: fontes.media }}>🎁 {g.descricao}</Texto>
+                <Texto variante="suave">{deISO(g.data)}</Texto>
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: todos }}
+              accessibilityLabel={`Já agradecemos a ${gs[0].quem_deu}`}
+              onPress={() => agradecer(gs)}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: ALVO_TOQUE, opacity: pressed ? 0.7 : 1 })}>
+              <MaterialCommunityIcons name={todos ? 'heart' : 'heart-outline'} size={24} color={todos ? cores.medidasForte : cores.textoSuave} />
+              <Texto style={{ fontFamily: fontes.negrito, color: todos ? cores.texto : cores.textoSuave }}>
+                {todos ? 'Já agradecemos' : 'Marcar como agradecido'}
+              </Texto>
+            </Pressable>
+          </Cartao>
+        );
+      })}
+    </>
   );
 }
