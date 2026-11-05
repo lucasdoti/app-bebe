@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useRegistros } from './registros';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 export type Remedio = {
   id: string;
@@ -99,17 +100,7 @@ export function RemediosProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`remedios:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'remedios' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lembretes' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('remedios', familiaId, ids, ['remedios', 'lembretes'], recarregar, [...remedios, ...lembretes]);
 
   const doBebeAtual = useMemo(() => remedios.filter((r) => r.bebe_id === bebeAtual?.id), [remedios, bebeAtual]);
   const lembretesDoBebe = useMemo(() => lembretes.filter((l) => l.bebe_id === bebeAtual?.id), [lembretes, bebeAtual]);

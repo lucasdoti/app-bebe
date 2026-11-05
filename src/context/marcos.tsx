@@ -5,6 +5,7 @@ import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 type ValorMarcos = {
   /** Marcos do bebê selecionado, do mais antigo para o mais novo. */
@@ -49,16 +50,7 @@ export function MarcosProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`marcos:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'marcos' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('marcos', familiaId, ids, ['marcos'], recarregar, todos);
 
   const marcos = useMemo(() => todos.filter((d) => d.bebe_id === bebeAtual?.id), [todos, bebeAtual]);
 

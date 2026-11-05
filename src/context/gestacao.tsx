@@ -4,6 +4,7 @@ import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 export type TipoPreNatal = 'consulta' | 'exame' | 'ultrassom';
 
@@ -119,19 +120,7 @@ export function GestacaoProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`gestacao:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pre_natal' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mala_itens' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'nomes' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'nomes_votos' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('gestacao', familiaId, ids, ['pre_natal', 'mala_itens', 'nomes', 'nomes_votos'], recarregar, [...preNatal, ...mala, ...nomes], ['nomes_votos']);
 
   const doBebe = useMemo(() => preNatal.filter((p) => p.bebe_id === bebeAtual?.id), [preNatal, bebeAtual]);
   const malaDoBebe = useMemo(() => mala.filter((m) => m.bebe_id === bebeAtual?.id), [mala, bebeAtual]);

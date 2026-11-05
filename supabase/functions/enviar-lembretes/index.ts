@@ -26,6 +26,8 @@ webpush.setVapidDetails(
 const db = createClient(URL_SUPABASE, CHAVE_SECRETA, { auth: { persistSession: false } });
 
 type Aviso = { titulo: string; corpo: string; tag: string; url: string };
+// chave: marca em lembretes_enviados dos avisos que só podem sair uma vez.
+type AvisoDevido = { bebeId: string; montar: (nome: string) => Aviso; chave?: string };
 
 const MIN = 60_000;
 const HORA = 60 * MIN;
@@ -77,7 +79,7 @@ async function membrosPorBebe(bebeIds: string[]) {
 }
 
 async function lembretesDevidos(agora: Date) {
-  const avisos: { bebeId: string; montar: (nome: string) => Aviso }[] = [];
+  const avisos: AvisoDevido[] = [];
 
   // 1. Remédios: próxima dose = última dose + intervalo (ou o início, se nenhuma foi dada).
   const { data: remedios } = await db
@@ -233,14 +235,16 @@ function somarMeses(iso: string, meses: number) {
 }
 const somarDias = (iso: string, dias: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + dias * 24 * HORA).toISOString().slice(0, 10);
 
-async function jaEnviado(chave: string) {
+// Reserva o aviso para não sair duas vezes. Falso se já saiu (chave repetida) ou se o banco falhou:
+// nesse caso nada é enviado e o próximo minuto tenta de novo.
+async function reservarAviso(chave: string) {
   const { error } = await db.from('lembretes_enviados').insert({ chave });
-  // Chave repetida = esse aviso já saiu antes.
-  return !!error;
+  if (error && error.code !== '23505') console.error('Falha ao reservar aviso', error.message);
+  return !error;
 }
 
 async function avisosDeVacina(agora: Date) {
-  const avisos: { bebeId: string; montar: (nome: string) => Aviso }[] = [];
+  const avisos: AvisoDevido[] = [];
   const hoje = isoBR.format(agora);
   const amanha = somarDias(hoje, 1);
   const { data: bebes } = await db.from('bebes').select('id, status, nascimento, parto_previsto');
@@ -253,8 +257,10 @@ async function avisosDeVacina(agora: Date) {
       for (const [codigo, nome, meses] of VACINAS_BEBE) {
         const data = somarMeses(b.nascimento, meses);
         if ((data !== hoje && data !== amanha) || tomou(b.id, 'bebe', codigo)) continue;
-        if (await jaEnviado(`vacina:${b.id}:${codigo}:${data === hoje ? 'dia' : 'vespera'}`)) continue;
+        const chave = `vacina:${b.id}:${codigo}:${data === hoje ? 'dia' : 'vespera'}`;
+        if (!(await reservarAviso(chave))) continue;
         avisos.push({
+          chave,
           bebeId: b.id,
           montar: (n) => ({
             titulo: `${data === hoje ? 'Hoje' : 'Amanhã'}: vacina de ${n}`,
@@ -270,8 +276,10 @@ async function avisosDeVacina(agora: Date) {
       const totalDias = 280 - Math.round((Date.parse(`${b.parto_previsto}T00:00:00Z`) - Date.parse(`${hoje}T00:00:00Z`)) / (24 * HORA));
       for (const [codigo, nome, semana] of VACINAS_MAE) {
         if (totalDias < semana * 7 || tomou(b.id, 'mae', codigo)) continue;
-        if (await jaEnviado(`vacina:${b.id}:${codigo}:liberada`)) continue;
+        const chave = `vacina:${b.id}:${codigo}:liberada`;
+        if (!(await reservarAviso(chave))) continue;
         avisos.push({
+          chave,
           bebeId: b.id,
           montar: () => ({
             titulo: `Vacina da gestação liberada: ${nome.split(' (')[0]}`,
@@ -320,7 +328,10 @@ Deno.serve(async (req) => {
   let enviados = 0;
   for (const a of avisos) {
     const f = familias.get(a.bebeId);
-    if (f) enviados += await enviarPara(f.membros, a.montar(f.nome));
+    const entregues = f ? await enviarPara(f.membros, a.montar(f.nome)) : 0;
+    enviados += entregues;
+    // Não chegou a nenhum aparelho: libera a reserva para tentar de novo no próximo minuto.
+    if (a.chave && !entregues) await db.from('lembretes_enviados').delete().eq('chave', a.chave);
   }
   return Response.json({ avisos: avisos.length, enviados });
 });

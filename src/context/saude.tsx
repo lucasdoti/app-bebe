@@ -5,6 +5,7 @@ import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 type ValorSaude = {
   /** Todos os itens da ficha do bebê selecionado. */
@@ -57,16 +58,7 @@ export function SaudeProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`saude:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'saude_itens' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('saude', familiaId, ids, ['saude_itens'], recarregar, itens);
 
   const valor = useMemo(() => {
     const ficha = itens.filter((i) => i.bebe_id === bebeAtual?.id);

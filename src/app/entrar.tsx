@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Image, Platform, View } from 'react-native';
 
 import { Aviso, Botao, Campo, Cartao, Tela, Texto } from '@/components/ui';
-import { NOME_APP } from '@/lib/app';
+import { NOME_APP, SENHA_MINIMA } from '@/lib/app';
 import { conviteGuardado } from '@/lib/convite';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
 import { fontes } from '@/theme/cores';
@@ -30,6 +30,11 @@ export default function Entrar() {
     setInfo(null);
     if (!email.trim() || !senha) {
       setErro('Preencha e-mail e senha.');
+      return;
+    }
+    // Só para contas novas: quem já tem senha mais curta continua entrando.
+    if (modo === 'criar' && senha.length < SENHA_MINIMA) {
+      setErro(`A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`);
       return;
     }
     setCarregando(true);
@@ -130,7 +135,7 @@ export default function Entrar() {
         onChangeText={setSenha}
         secureTextEntry
         autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'}
-        placeholder={modo === 'criar' ? 'Pelo menos 6 caracteres' : ''}
+        placeholder={modo === 'criar' ? `Pelo menos ${SENHA_MINIMA} caracteres` : ''}
         onSubmitEditing={enviar}
       />
 

@@ -175,8 +175,9 @@ export default function Enxoval() {
     );
     if (!ok) return;
     // Presente: o item fica no enxoval como qualquer outro e também entra na lista de presentes.
-    if (presenteDe)
-      await executar(
+    const presenteSalvo =
+      !!presenteDe &&
+      (await executar(
         supabase.from('enxoval_gastos').insert({
           bebe_id: bebeAtual!.id,
           tipo: 'presente',
@@ -185,12 +186,12 @@ export default function Enxoval() {
           categoria,
           quem_deu: presenteDe,
         }),
-      );
+      ));
     setLink('');
     setAviso(
       `${quantidade} ${n}${t ? ` ${t}` : ''} ${igual ? 'somado à lista' : falta ? 'na lista do que falta' : 'adicionado'}${
-        presenteDe ? ` · presente de ${presenteDe}` : ''
-      }.`,
+        presenteSalvo ? ` · presente de ${presenteDe}` : ''
+      }.${presenteDe && !presenteSalvo ? ' O presente não foi salvo: anote de novo na aba Presentes.' : ''}`,
     );
     setNome('');
     setQuantidade(1);

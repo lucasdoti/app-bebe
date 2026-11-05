@@ -5,6 +5,7 @@ import { Platform, Pressable, Share, View } from 'react-native';
 
 import { Aviso, Botao, Cabecalho, Cartao, Escolha, Tela, Texto } from '@/components/ui';
 import { useBebes } from '@/context/bebes';
+import { useRegistros } from '@/context/registros';
 import { useSessao } from '@/context/sessao';
 import { NOME_APP } from '@/lib/app';
 import { confirmar } from '@/lib/confirmar';
@@ -19,6 +20,7 @@ import { useTema, type ModoTema } from '@/theme/tema';
 export default function Ajustes() {
   const { sessao, familia, membros, recarregarFamilia, sair } = useSessao();
   const { bebes } = useBebes();
+  const { pendentes, recusados } = useRegistros();
   const { cores, modo, setModo } = useTema();
   const [aviso, setAviso] = useState<string | null>(null);
 
@@ -56,6 +58,17 @@ export default function Ajustes() {
       await recarregarFamilia();
       setAviso(`${nome} não faz mais parte da família. O código de convite foi trocado.`);
     });
+  }
+
+  // Sair apaga os dados deste aparelho, inclusive o que ainda não chegou ao servidor.
+  function sairDaConta() {
+    const naoSalvos = pendentes + recusados.length;
+    if (!naoSalvos) return sair();
+    confirmar(
+      `${naoSalvos === 1 ? '1 registro ainda não foi salvo e será perdido' : `${naoSalvos} registros ainda não foram salvos e serão perdidos`}. Sair mesmo assim?`,
+      'Sair',
+      sair,
+    );
   }
 
   function sairDaFamilia() {
@@ -156,7 +169,7 @@ export default function Ajustes() {
       <Botao titulo="Lembretes e notificações" variante="secundario" onPress={() => router.push('/lembretes')} />
 
       <Botao titulo="Sair da família" variante="texto" onPress={sairDaFamilia} />
-      <Botao titulo="Sair da conta" variante="texto" onPress={sair} />
+      <Botao titulo="Sair da conta" variante="texto" onPress={sairDaConta} />
       <Texto variante="suave" style={{ textAlign: 'center' }}>
         {NOME_APP} · versão {process.env.EXPO_PUBLIC_VERSAO || 'local'}
       </Texto>

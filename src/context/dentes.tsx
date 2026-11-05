@@ -5,6 +5,7 @@ import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 type ValorDentes = {
   /** Dentes que já nasceram, do bebê selecionado, do mais antigo para o mais novo. */
@@ -49,16 +50,7 @@ export function DentesProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`dentes:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'dentes' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('dentes', familiaId, ids, ['dentes'], recarregar, todos);
 
   const dentes = useMemo(() => todos.filter((d) => d.bebe_id === bebeAtual?.id), [todos, bebeAtual]);
 

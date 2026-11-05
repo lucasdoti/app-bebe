@@ -131,3 +131,27 @@ test('no máximo 5 aparelhos por pessoa', async () => {
   for (let i = 0; i < 7; i++) await inscrever(PAI, `https://fcm.googleapis.com/fcm/send/${i}`);
   assert.equal((await como(PAI, 'select endpoint from public.push_inscricoes')).length, 5);
 });
+
+test('as tabelas do tempo real têm a coluna do filtro e estão na publicação', async () => {
+  const contextos = readdirSync(join(import.meta.dirname, '../../src/context'));
+  const filtradas = new Set();
+  for (const arquivo of contextos) {
+    const codigo = readFileSync(join(import.meta.dirname, '../../src/context', arquivo), 'utf8');
+    const chamada = codigo.match(/useTempoReal\('[^']+', \w+, \w+, \[([^\]]+)\], recarregar, .*?(?:, \[([^\]]*)\])?\);/);
+    if (!chamada) continue;
+    const sem = new Set((chamada[2] ?? '').match(/[a-z_]+/g) ?? []);
+    for (const t of chamada[1].match(/[a-z_]+/g)) if (!sem.has(t)) filtradas.add(t);
+    for (const t of chamada[1].match(/[a-z_]+/g)) {
+      const { rows } = await db.query('select 1 from pg_publication_tables where pubname = $1 and tablename = $2', ['supabase_realtime', t]);
+      assert.equal(rows.length, 1, `${t} fora da publicação`);
+    }
+  }
+  assert.ok(filtradas.size >= 15, `só achei ${filtradas.size} tabelas`);
+  for (const t of filtradas) {
+    const { rows } = await db.query(
+      `select 1 from information_schema.columns where table_schema = 'public' and table_name = $1 and column_name = 'bebe_id'`,
+      [t],
+    );
+    assert.equal(rows.length, 1, `${t} sem bebe_id`);
+  }
+});

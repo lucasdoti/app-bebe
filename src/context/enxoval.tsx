@@ -5,6 +5,7 @@ import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 export type Categoria = 'roupa' | 'especial' | 'higiene' | 'quarto' | 'passeio' | 'alimentacao' | 'outros';
 
@@ -202,20 +203,7 @@ export function EnxovalProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`enxoval:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_itens' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_gastos' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'enxoval_orcamento' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cha_reservas' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cha_bebe' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('enxoval', familiaId, ids, ['enxoval_itens', 'enxoval_gastos', 'enxoval_orcamento', 'cha_reservas', 'cha_bebe'], recarregar, [...itens, ...gastos, ...reservas]);
 
   const doBebe = useMemo(() => itens.filter((i) => i.bebe_id === bebeAtual?.id && !i.falta), [itens, bebeAtual]);
   const faltam = useMemo(() => itens.filter((i) => i.bebe_id === bebeAtual?.id && i.falta), [itens, bebeAtual]);

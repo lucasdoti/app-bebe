@@ -61,6 +61,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Quem cria a conta cria a família e cadastra o(s) bebê(s): nome, data de nascimento, sexo (para a curva da OMS) e peso e altura ao nascer.
 - Código de convite (ex.: BEBE-7K2X9P, 6 caracteres para não dar para adivinhar) ou link (`/convite/BEBE-7K2X9P`) para o outro responsável entrar na família.
 - Na V1 cada pessoa participa de uma família só; quem sai da família pode entrar em outra com um código.
+- Sair da conta apaga do aparelho os dados da família (registros, ficha de saúde, enxoval, localização); ficam só o tema, um convite ainda não usado e o que o convidado guardou na página do chá. Se houver registro ainda não salvo, o app avisa antes (2026-11-05). Senha nova: pelo menos 8 caracteres.
 - Segurança do convite (2026-11-05): depois de 10 códigos errados em 1 hora, a pessoa precisa esperar. Na aba Família, qualquer membro pode gerar um código novo ou remover outro membro; remover também troca o código. Quem criou a família não pode ser removido.
 - Mais de um bebê por família, com seletor no topo da tela.
 - Cada registro guarda quem o fez ("registrado pela mãe").

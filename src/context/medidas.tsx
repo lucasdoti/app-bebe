@@ -4,6 +4,7 @@ import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 export type Medida = {
   id: string;
@@ -52,16 +53,7 @@ export function MedidasProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !idsBebes) return;
-    const canal = supabase
-      .channel(`medidas:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'medidas' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, idsBebes, recarregar]);
+  useTempoReal('medidas', familiaId, idsBebes, ['medidas'], recarregar, medidas);
 
   const doBebe = useMemo(() => medidas.filter((m) => m.bebe_id === bebeAtual?.id), [medidas, bebeAtual]);
 

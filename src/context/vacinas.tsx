@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Para } from '@/lib/vacinas';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 export type VacinaAplicada = {
   id: string;
@@ -55,16 +56,7 @@ export function VacinasProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`vacinas:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'vacinas_aplicadas' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('vacinas', familiaId, ids, ['vacinas_aplicadas'], recarregar, todas);
 
   const aplicadas = useMemo(() => todas.filter((v) => v.bebe_id === bebeAtual?.id), [todas, bebeAtual]);
 

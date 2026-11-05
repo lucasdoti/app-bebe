@@ -5,6 +5,7 @@ import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useBebes } from './bebes';
 import { useSessao } from './sessao';
+import { useTempoReal } from '@/hooks/use-tempo-real';
 
 export type Papel = 'obstetra' | 'maternidade' | 'doula' | 'pediatra' | 'outro';
 export type Contato = {
@@ -113,17 +114,7 @@ export function PartoProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    if (!familiaId || !ids) return;
-    const canal = supabase
-      .channel(`parto:${familiaId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'contatos_parto' }, () => recarregar())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'plano_parto_itens' }, () => recarregar())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [familiaId, ids, recarregar]);
+  useTempoReal('parto', familiaId, ids, ['contatos_parto', 'plano_parto_itens'], recarregar, [...contatos, ...plano]);
 
   const valor = useMemo(
     () => ({

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import { INICIO } from '@/lib/app';
+import { INICIO, SENHA_MINIMA } from '@/lib/app';
 import { Aviso, Botao, Campo, Tela, Texto } from '@/components/ui';
 import { useSessao } from '@/context/sessao';
 import { mensagemDeErro, supabase } from '@/lib/supabase';
@@ -16,7 +16,7 @@ export default function NovaSenha() {
 
   async function salvar() {
     setErro(null);
-    if (senha.length < 6) return setErro('A senha precisa ter pelo menos 6 caracteres.');
+    if (senha.length < SENHA_MINIMA) return setErro(`A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`);
     if (senha !== repetir) return setErro('As duas senhas não estão iguais.');
     setCarregando(true);
     const { error } = await supabase.auth.updateUser({ password: senha });
@@ -46,7 +46,7 @@ export default function NovaSenha() {
         onChangeText={setSenha}
         secureTextEntry
         autoComplete="new-password"
-        placeholder="Pelo menos 6 caracteres"
+        placeholder={`Pelo menos ${SENHA_MINIMA} caracteres`}
       />
       <Campo
         rotulo="Repita a senha"
