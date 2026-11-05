@@ -40,6 +40,24 @@ export default function Ajustes() {
     }
   }
 
+  function novoCodigo() {
+    confirmar('Gerar um novo código? O código atual e os links já enviados param de funcionar.', 'Gerar', async () => {
+      const { error } = await supabase.rpc('novo_codigo_convite');
+      if (error) return setAviso(mensagemDeErro(error));
+      await recarregarFamilia();
+      setAviso('Código novo gerado. O anterior não funciona mais.');
+    });
+  }
+
+  function removerMembro(id: string, nome: string) {
+    confirmar(`Remover ${nome} da família? O código de convite também será trocado.`, 'Remover', async () => {
+      const { error } = await supabase.rpc('remover_membro', { p_user_id: id });
+      if (error) return setAviso(mensagemDeErro(error));
+      await recarregarFamilia();
+      setAviso(`${nome} não faz mais parte da família. O código de convite foi trocado.`);
+    });
+  }
+
   function sairDaFamilia() {
     confirmar('Sair da família? Você deixa de ver os registros dos bebês.', 'Sair', async () => {
       const { error } = await supabase.rpc('sair_familia');
@@ -91,10 +109,21 @@ export default function Ajustes() {
       <Cartao>
         <Texto variante="subtitulo">{familia.nome}</Texto>
         {membros.map((m) => (
-          <Texto key={m.user_id}>
-            {m.nome} · {nomePapel[m.papel]}
-            {m.user_id === sessao?.user.id ? ' (você)' : ''}
-          </Texto>
+          <View key={m.user_id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: ALVO_TOQUE }}>
+            <Texto style={{ flex: 1 }}>
+              {m.nome} · {nomePapel[m.papel]}
+              {m.user_id === sessao?.user.id ? ' (você)' : ''}
+            </Texto>
+            {m.user_id !== sessao?.user.id && m.user_id !== familia.criado_por && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Remover ${m.nome} da família`}
+                onPress={() => removerMembro(m.user_id, m.nome)}
+                style={{ minHeight: ALVO_TOQUE, paddingHorizontal: 12, justifyContent: 'center' }}>
+                <Texto style={{ fontFamily: fontes.negrito, color: cores.perigo }}>Remover</Texto>
+              </Pressable>
+            )}
+          </View>
         ))}
         {sozinho && <Texto variante="suave">Convide o outro responsável para registrarem juntos.</Texto>}
       </Cartao>
@@ -107,6 +136,7 @@ export default function Ajustes() {
           {familia.codigo_convite}
         </Texto>
         <Botao titulo="Enviar convite" variante="secundario" onPress={compartilhar} />
+        <Botao titulo="Gerar novo código" variante="texto" onPress={novoCodigo} />
       </Cartao>
 
       <Aviso texto={aviso} tipo="info" />

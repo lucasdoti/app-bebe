@@ -76,7 +76,7 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
       salvarPref(chaveCache(userId), null);
     } else {
       const [{ data: fam }, { data: lista }] = await Promise.all([
-        supabase.from('familias').select('id, nome, codigo_convite').eq('id', meu.familia_id).single(),
+        supabase.from('familias').select('id, nome, codigo_convite, criado_por').eq('id', meu.familia_id).single(),
         supabase
           .from('membros')
           .select('familia_id, user_id, nome, papel')

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { AlertaSaude } from '@/components/alerta-saude';
+import { AvisoRecusados } from '@/components/aviso-recusados';
 import { Folha } from '@/components/folha';
 import { InicioGestacao } from '@/components/inicio-gestacao';
 import { LinhaRegistro } from '@/components/linha-registro';
@@ -443,6 +444,7 @@ export default function Inicio() {
       </View>
 
       <AlertaSaude />
+      <AvisoRecusados />
 
       {/* Marco de hoje: some no dia seguinte. */}
       {marcos

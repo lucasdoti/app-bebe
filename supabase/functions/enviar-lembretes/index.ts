@@ -33,11 +33,16 @@ const fusoBR = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo',
 const diaBR = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
 const hora = (d: Date) => fusoBR.format(d);
 
+// Só serviços de push conhecidos; a mesma lista está na função salvar_inscricao_push do banco.
+const PUSH_CONHECIDO =
+  /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.services\.mozilla\.com|web\.push\.apple\.com|notify\.windows\.com)(:[0-9]+)?\//i;
+
 async function enviarPara(userIds: string[], aviso: Aviso) {
   if (!userIds.length) return 0;
   const { data: inscricoes } = await db.from('push_inscricoes').select('endpoint, p256dh, auth').in('user_id', userIds);
   let enviados = 0;
   for (const i of inscricoes ?? []) {
+    if (!PUSH_CONHECIDO.test(i.endpoint)) continue;
     try {
       await webpush.sendNotification(
         { endpoint: i.endpoint, keys: { p256dh: i.p256dh, auth: i.auth } },

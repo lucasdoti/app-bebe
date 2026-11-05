@@ -36,7 +36,7 @@ export default function FamiliaScreen() {
     if (modo === 'entrar' && formatarCodigo(codigo).length < 11) return setErro('Digite o código completo.');
 
     setCarregando(true);
-    const { error } =
+    const { data, error } =
       modo === 'criar'
         ? await supabase.rpc('criar_familia', {
             p_nome_familia: nomeFamilia.trim(),
@@ -51,6 +51,12 @@ export default function FamiliaScreen() {
     if (error) {
       setCarregando(false);
       setErro(mensagemDeErro(error));
+      return;
+    }
+    // Código errado não dá erro: a função devolve vazio para contar a tentativa.
+    if (!(data as { id?: string } | null)?.id) {
+      setCarregando(false);
+      setErro('Código de convite não encontrado.');
       return;
     }
     esquecerConvite();

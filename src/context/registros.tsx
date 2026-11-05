@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState, Platform } from 'react-native';
 
 import { fecharNotificacoes } from '@/lib/notificacoes';
+import { idDaOperacao, separarRecusada, type Operacao, type Recusado } from '@/lib/fila';
 import type { DetalhesFralda, Lado, Leite, Registro } from '@/lib/registros';
 import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
@@ -12,11 +13,6 @@ import { useSessao } from './sessao';
 // O app grava primeiro aqui no aparelho (estado + fila de envio) e sincroniza com o
 // Supabase quando há internet. O Realtime traz o que o outro responsável registrou.
 
-type Operacao =
-  | { op: 'inserir'; registro: Registro }
-  | { op: 'atualizar'; id: string; mudancas: Partial<Pick<Registro, 'inicio' | 'fim' | 'detalhes'>> }
-  | { op: 'excluir'; id: string };
-
 type NovoRegistro = Omit<Registro, 'id' | 'autor_id' | 'bebe_id'> & { bebe_id?: string };
 
 type ValorRegistros = {
@@ -24,6 +20,10 @@ type ValorRegistros = {
   /** Registros do bebê selecionado, do mais recente para o mais antigo. */
   doBebe: Registro[];
   pendentes: number;
+  /** O que o servidor recusou: não foi salvo e a pessoa precisa decidir o que fazer. */
+  recusados: Recusado[];
+  tentarRecusados: () => void;
+  descartarRecusados: () => void;
   /** Traz do servidor os registros do bebê selecionado no período (para o histórico). Falso se sem internet. */
   carregarPeriodo: (desde: Date, ate: Date) => Promise<boolean>;
   criar: (novo: NovoRegistro) => Registro | null;
@@ -78,21 +78,27 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [fila, setFila] = useState<Operacao[]>([]);
   const [carregadoPara, setCarregadoPara] = useState<string | null>(null);
+  const [recusados, setRecusados] = useState<Recusado[]>([]);
   const filaRef = useRef<Operacao[]>([]);
+  const recusadosRef = useRef<Recusado[]>([]);
   const enviando = useRef(false);
 
   const chaveCache = familiaId && `registros:${familiaId}`;
   const chaveFila = familiaId && `fila:${familiaId}`;
+  const chaveRecusados = familiaId && `recusados:${familiaId}`;
 
   // Abre com o que estava salvo no aparelho.
   useEffect(() => {
-    if (!chaveCache || !chaveFila) return;
+    if (!chaveCache || !chaveFila || !chaveRecusados) return;
     const cache = lerPref(chaveCache);
     const filaSalva = lerPref(chaveFila);
+    const recusadosSalvos = lerPref(chaveRecusados);
     filaRef.current = filaSalva ? JSON.parse(filaSalva) : [];
     setFila(filaRef.current);
+    recusadosRef.current = recusadosSalvos ? JSON.parse(recusadosSalvos) : [];
+    setRecusados(recusadosRef.current);
     setRegistros(cache ? JSON.parse(cache) : []);
-  }, [chaveCache, chaveFila]);
+  }, [chaveCache, chaveFila, chaveRecusados]);
 
   // O aparelho guarda só os últimos dias; meses antigos abertos no histórico ficam só na memória.
   useEffect(() => {
@@ -108,6 +114,15 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
       if (chaveFila) salvarPref(chaveFila, JSON.stringify(nova));
     },
     [chaveFila],
+  );
+
+  const guardarRecusados = useCallback(
+    (nova: Recusado[]) => {
+      recusadosRef.current = nova;
+      setRecusados(nova);
+      if (chaveRecusados) salvarPref(chaveRecusados, nova.length ? JSON.stringify(nova) : null);
+    },
+    [chaveRecusados],
   );
 
   // Envia a fila na ordem. Para na primeira falha de rede e tenta de novo depois.
@@ -129,13 +144,20 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
           ({ error: erro } = await supabase.from('registros').delete().eq('id', op.id));
         }
         if (erro && ehFalhaDeRede(erro)) return;
-        if (erro) console.warn('Registro descartado na sincronização:', erro.message);
+        if (erro) {
+          // Recusado pelo servidor: não some em silêncio, fica guardado para a pessoa decidir.
+          const motivo = erro.message ?? 'Erro desconhecido';
+          const { recusadas, restante } = separarRecusada(filaRef.current);
+          guardarRecusados([...recusadosRef.current, ...recusadas.map((o) => ({ op: o, erro: motivo }))]);
+          guardarFila(restante);
+          continue;
+        }
         guardarFila(filaRef.current.slice(1));
       }
     } finally {
       enviando.current = false;
     }
-  }, [guardarFila]);
+  }, [guardarFila, guardarRecusados]);
 
   // Busca os últimos dias no servidor e reaplica o que ainda não foi enviado.
   const recarregar = useCallback(async () => {
@@ -248,6 +270,20 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
     [enviarFila, guardarFila],
   );
 
+  const tentarRecusados = useCallback(() => {
+    guardarFila([...filaRef.current, ...recusadosRef.current.map((r) => r.op)]);
+    guardarRecusados([]);
+    enviarFila().then(recarregar);
+  }, [enviarFila, guardarFila, guardarRecusados, recarregar]);
+
+  const descartarRecusados = useCallback(() => {
+    // O que nunca chegou ao servidor sai também da tela; o resto volta a ser o que o servidor tem.
+    const criados = new Set(recusadosRef.current.filter((r) => r.op.op === 'inserir').map((r) => idDaOperacao(r.op)));
+    guardarRecusados([]);
+    setRegistros((l) => l.filter((r) => !criados.has(r.id)));
+    recarregar();
+  }, [guardarRecusados, recarregar]);
+
   const criar = useCallback(
     (novo: NovoRegistro) => {
       const bebeId = novo.bebe_id ?? bebeAtual?.id;
@@ -274,6 +310,9 @@ export function RegistrosProvider({ children }: { children: ReactNode }) {
     carregando: !!familiaId && carregadoPara !== familiaId,
     doBebe,
     pendentes: fila.length,
+    recusados,
+    tentarRecusados,
+    descartarRecusados,
     carregarPeriodo,
     criar,
     atualizar,

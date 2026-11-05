@@ -29,6 +29,7 @@ export type Familia = {
   id: string;
   nome: string;
   codigo_convite: string;
+  criado_por?: string;
 };
 
 export type Membro = {

@@ -61,6 +61,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Quem cria a conta cria a família e cadastra o(s) bebê(s): nome, data de nascimento, sexo (para a curva da OMS) e peso e altura ao nascer.
 - Código de convite (ex.: BEBE-7K2X9P, 6 caracteres para não dar para adivinhar) ou link (`/convite/BEBE-7K2X9P`) para o outro responsável entrar na família.
 - Na V1 cada pessoa participa de uma família só; quem sai da família pode entrar em outra com um código.
+- Segurança do convite (2026-11-05): depois de 10 códigos errados em 1 hora, a pessoa precisa esperar. Na aba Família, qualquer membro pode gerar um código novo ou remover outro membro; remover também troca o código. Quem criou a família não pode ser removido.
 - Mais de um bebê por família, com seletor no topo da tela.
 - Cada registro guarda quem o fez ("registrado pela mãe").
 
@@ -79,6 +80,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Mamadeira: volume em ml e tipo (leite materno ou fórmula). Os botões de volume acompanham a idade (até 1 mês: 20 a 90 ml; 1–3 meses: 60 a 150; 3–6 meses: 120 a 210; depois: 150 a 240) e sempre incluem o último volume usado; outros valores pelo formulário.
 - Refeição sólida (a partir de 6 meses): alimento, quantidade aproximada e aceitação.
 - Registro retroativo ("mamou às 14h por 15 min").
+- Registro recusado pelo servidor não some: a home avisa o que não foi salvo, com "Tentar de novo" e "Descartar" (2026-11-05).
 - Registro de dias anteriores (2026-10-22): o formulário oferece Hoje, Ontem e "Outro dia" (data DD/MM/AAAA, nunca no futuro nem antes do nascimento). No histórico, cada dia tem "Registrar algo neste dia", que abre a escolha do tipo com a data já preenchida.
 - Água (2026-10-22, sugestão de uma mãe conhecida): só a partir dos 6 meses, porque antes disso a orientação (OMS e SBP) é não oferecer água. O botão "Refeição" do rodapé abre o painel "Comer e beber", com volumes prontos de água (30, 50, 100 e 150 ml, mais o último usado) e o atalho para a refeição. O cartão de alimentação mostra a água do dia; o histórico e o resumo para o pediatra também (média em ml por dia).
 
@@ -133,6 +135,7 @@ A V1 cobre conta da família, registro de rotina, medidas com curva da OMS, suge
 - Na gestação, aviso automático até 24 h antes de cada consulta ou exame do pré-natal, com as perguntas anotadas para a consulta.
 - Vacinas (2026-10-20): aviso na véspera e no dia de cada dose do bebê ainda não tomada, e, na gestação, quando chega a semana da dTpa (20ª) e da VSR (28ª). Os avisos de vacina saem a partir das 9h e não se repetem (tabela `lembretes_enviados`).
 - Como funciona (V1): uma Edge Function (`enviar-lembretes`) roda a cada minuto pelo pg_cron. A dose registrada antes da hora cancela o aviso para os dois; um aviso que já apareceu some do celular de quem registrou, mas no outro celular fica até ser tocado (o Web Push não permite apagar sem mostrar outra notificação).
+- Push só aceita serviços conhecidos (Google, Mozilla, Apple, Microsoft), com no máximo 5 aparelhos por pessoa; o mais antigo sai (2026-11-05).
 - Lembrete de mamada: um aviso por mamada, ao passar o intervalo escolhido (2h a 4h); não avisa durante uma mamada em andamento.
 - Remédio: tocar em "Dei a dose" antes da hora liberada pede confirmação, para evitar dose dobrada.
 

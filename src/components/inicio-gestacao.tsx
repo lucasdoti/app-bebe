@@ -24,6 +24,7 @@ import { duracao, haQuanto, horaCurta } from '@/lib/tempo';
 import { fontes } from '@/theme/cores';
 import { useTema } from '@/theme/tema';
 import { AlertaSaude } from './alerta-saude';
+import { AvisoRecusados } from './aviso-recusados';
 import { BotaoRegistro, CartaoResumo } from './home';
 import { Botao, Tela, Texto } from './ui';
 
@@ -111,6 +112,7 @@ export function InicioGestacao({ bebe, topo }: { bebe: Bebe; topo: ReactNode }) 
       </View>
 
       <AlertaSaude />
+      <AvisoRecusados />
 
       {ig.semanas >= 34 && chegouAHora}
 
