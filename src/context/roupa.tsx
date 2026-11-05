@@ -89,9 +89,18 @@ export function RoupaProvider({ children }: { children: ReactNode }) {
       .channel(`roupa_ajuste:${familia?.id}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'roupa_ajuste', filter: `bebe_id=in.(${idsBebes})` },
+        { event: 'INSERT', schema: 'public', table: 'roupa_ajuste', filter: `bebe_id=in.(${idsBebes})` },
         () => recarregar(),
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'roupa_ajuste', filter: `bebe_id=in.(${idsBebes})` },
+        () => recarregar(),
+      )
+      // Exclusões não aceitam filtro: a chave primária traz o bebê.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'roupa_ajuste' }, ({ old }) => {
+        if (idsBebes.split(',').includes(old.bebe_id)) recarregar();
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(canal);

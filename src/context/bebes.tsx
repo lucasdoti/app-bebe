@@ -1,8 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { lerPref, salvarPref } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useSessao } from './sessao';
+import { exclusaoEhDaFamilia } from '@/lib/tempo-real';
 
 export type Sexo = 'F' | 'M';
 
@@ -70,15 +71,29 @@ export function BebesProvider({ children }: { children: ReactNode }) {
     recarregar();
   }, [recarregar]);
 
+  const conhecidos = useRef(new Set<string>());
+  useEffect(() => {
+    conhecidos.current = new Set(bebes.map((b) => b.id));
+  }, [bebes]);
+
   useEffect(() => {
     if (!familiaId) return;
     const canal = supabase
       .channel(`bebes:${familiaId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'bebes', filter: `familia_id=eq.${familiaId}` },
+        { event: 'INSERT', schema: 'public', table: 'bebes', filter: `familia_id=eq.${familiaId}` },
         () => recarregar(),
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'bebes', filter: `familia_id=eq.${familiaId}` },
+        () => recarregar(),
+      )
+      // Exclusões não aceitam filtro: só recarrega se o bebê apagado for desta família.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bebes' }, ({ old }) => {
+        if (exclusaoEhDaFamilia(old, conhecidos.current, [])) recarregar();
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(canal);

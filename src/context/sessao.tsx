@@ -1,9 +1,9 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import { lerPref, salvarPref } from '@/lib/storage';
-import { chavesDaConta } from '@/lib/limpeza';
-import { armazenamento } from '@/lib/storage';
+import { chavesDaConta, encerrarSessao } from '@/lib/limpeza';
+import { desativarNotificacoes } from '@/lib/notificacoes';
+import { armazenamento, lerPref, salvarPref } from '@/lib/storage';
 import { supabase, type Familia, type Membro } from '@/lib/supabase';
 
 type ValorSessao = {
@@ -104,9 +104,18 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
       .channel(`membros:${familiaId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'membros', filter: `familia_id=eq.${familiaId}` },
+        { event: 'INSERT', schema: 'public', table: 'membros', filter: `familia_id=eq.${familiaId}` },
         () => recarregarFamilia(),
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'membros', filter: `familia_id=eq.${familiaId}` },
+        () => recarregarFamilia(),
+      )
+      // Exclusões não aceitam filtro: chegam de todas as famílias, só com a chave primária.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'membros' }, ({ old }) => {
+        if (old.familia_id === familiaId) recarregarFamilia();
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(canal);
@@ -114,10 +123,15 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
   }, [familiaId, recarregarFamilia]);
 
   const sair = useCallback(async () => {
-    await supabase.auth.signOut();
-    // Aparelho compartilhado: os dados da família não ficam guardados depois de sair.
-    const chaves = Object.keys(armazenamento ?? {});
-    for (const chave of chavesDaConta(chaves)) salvarPref(chave, null);
+    // Sai só deste aparelho; os outros continuam logados.
+    await encerrarSessao({
+      cancelarNotificacoes: desativarNotificacoes,
+      sairDoAparelho: () => supabase.auth.signOut({ scope: 'local' }),
+      // Aparelho compartilhado: os dados da família não ficam guardados depois de sair.
+      limparDados: () => {
+        for (const chave of chavesDaConta(Object.keys(armazenamento ?? {}))) salvarPref(chave, null);
+      },
+    });
   }, []);
 
   const carregando = !sessaoPronta || (!!userId && carregadaPara !== userId);
